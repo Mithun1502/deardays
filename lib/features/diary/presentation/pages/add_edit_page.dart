@@ -4,6 +4,7 @@ import 'package:dear_days/features/diary/data/local_data_source.dart';
 import 'package:dear_days/features/diary/data/diary_model.dart';
 import 'package:dear_days/config/constants.dart';
 import 'package:dear_days/features/settings/theme/theme_bloc.dart';
+import 'package:dear_days/app_theme.dart';
 
 class AddEditPage extends StatefulWidget {
   final DiaryModel? entry;
@@ -52,81 +53,77 @@ class _AddEditPageState extends State<AddEditPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<ThemeBloc, ThemeState>(
-      builder: (context, state) {
-        final isDark = state.isDarkMode;
-
-        return Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: isDark
-                  ? [Colors.black, const Color.fromARGB(255, 3, 0, 22)]
-                  : [
-                      const Color(0xFF4D96FF),
-                      const Color.fromARGB(255, 96, 79, 213)
-                    ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+    return BlocListener<ThemeBloc, ThemeState>(
+      listener: (context, state) {
+        setState(() {});
+      },
+      child: BlocBuilder<ThemeBloc, ThemeState>(
+        builder: (context, state) {
+          final isDark = state.isDarkMode;
+          final gradient = isDark ? darkGradient : lightGradient;
+          return Container(
+            decoration: BoxDecoration(
+              gradient: gradient,
             ),
-          ),
-          child: Scaffold(
-            backgroundColor: Colors.transparent,
-            appBar: AppBar(
-              elevation: 0,
+            child: Scaffold(
               backgroundColor: Colors.transparent,
-              title: Text(
-                widget.entry == null ? "Add Entry" : "Edit Entry",
-                style: TextStyle(
+              appBar: AppBar(
+                elevation: 0,
+                backgroundColor: Colors.transparent,
+                title: Text(
+                  widget.entry == null ? "Add Entry" : "Edit Entry",
+                  style: TextStyle(
+                    color: isDark
+                        ? Colors.white
+                        : const Color.fromARGB(255, 0, 16, 45),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                iconTheme: IconThemeData(
                   color: isDark
                       ? Colors.white
                       : const Color.fromARGB(255, 0, 16, 45),
-                  fontWeight: FontWeight.bold,
                 ),
-              ),
-              iconTheme: IconThemeData(
-                color: isDark
-                    ? Colors.white
-                    : const Color.fromARGB(255, 0, 16, 45),
-              ),
-              actions: [
-                IconButton(
-                  icon: Icon(
-                    isDark ? Icons.wb_sunny : Icons.nightlight_round,
-                    color: isDark
-                        ? const Color.fromARGB(255, 244, 244, 244)
-                        : const Color.fromARGB(255, 0, 16, 45),
-                  ),
-                  onPressed: () {
-                    context.read<ThemeBloc>().add(ToggleThemeEvent());
-                  },
-                ),
-              ],
-            ),
-            body: SingleChildScrollView(
-              padding: const EdgeInsets.all(AppConstants.defaultPadding),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    _buildTextField(
-                      controller: _titleController,
-                      label: 'Title',
-                      validatorMsg: 'Enter a title',
-                      isDark: isDark,
+                actions: [
+                  IconButton(
+                    icon: Icon(
+                      isDark ? Icons.wb_sunny : Icons.nightlight_round,
+                      color: isDark
+                          ? const Color.fromARGB(255, 244, 244, 244)
+                          : const Color.fromARGB(255, 0, 16, 45),
                     ),
-                    const SizedBox(height: 16),
-                    _buildContentField(isDark),
-                    const SizedBox(height: 16),
-                    _buildMoodDropdown(isDark),
-                    const SizedBox(height: 24),
-                    _buildSaveButton(isDark),
-                  ],
+                    onPressed: () {
+                      context.read<ThemeBloc>().add(ToggleThemeEvent());
+                    },
+                  ),
+                ],
+              ),
+              body: SingleChildScrollView(
+                padding: const EdgeInsets.all(AppConstants.defaultPadding),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      _buildTextField(
+                        controller: _titleController,
+                        label: 'Title',
+                        validatorMsg: 'Enter a title',
+                        isDark: isDark,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildContentField(isDark),
+                      const SizedBox(height: 16),
+                      _buildMoodDropdown(isDark),
+                      const SizedBox(height: 24),
+                      _buildSaveButton(isDark),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 

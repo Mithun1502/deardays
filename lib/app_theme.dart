@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+/// Light ThemeData
 final ThemeData lightTheme = ThemeData(
   brightness: Brightness.light,
   primarySwatch: Colors.indigo,
@@ -20,6 +21,7 @@ final ThemeData lightTheme = ThemeData(
   ),
 );
 
+/// Dark ThemeData
 final ThemeData darkTheme = ThemeData(
   brightness: Brightness.dark,
   scaffoldBackgroundColor: const Color(0xFF121212),
@@ -37,4 +39,17 @@ final ThemeData darkTheme = ThemeData(
       borderSide: BorderSide(color: Colors.deepPurple),
     ),
   ),
+);
+
+/// ✅ Gradient Definitions (for background use)
+const Gradient lightGradient = LinearGradient(
+  colors: [Color.fromARGB(255, 3, 60, 86), Color(0xFFE1F5FE)],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+);
+
+const Gradient darkGradient = LinearGradient(
+  colors: [Color.fromARGB(255, 0, 0, 0), Color.fromARGB(255, 79, 55, 75)],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
 );

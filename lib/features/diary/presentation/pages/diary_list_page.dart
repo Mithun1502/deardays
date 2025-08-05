@@ -5,6 +5,7 @@ import 'package:dear_days/features/diary/presentation/widgets/diary_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:intl/intl.dart';
+import 'package:dear_days/app_theme.dart';
 
 class DiaryListPage extends StatefulWidget {
   const DiaryListPage({super.key});
@@ -95,19 +96,11 @@ class _DiaryListPageState extends State<DiaryListPage> {
 
   @override
   Widget build(BuildContext context) {
-    final gradientColors = _isDark
-        ? [Colors.black, const Color.fromARGB(255, 3, 0, 22)]
-        : [const Color(0xFF4D96FF), const Color.fromARGB(255, 37, 16, 227)];
-
     final textColor = _isDark ? Colors.white : Colors.black87;
-
+    final gradient = _isDark ? darkGradient : lightGradient;
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: gradientColors,
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: gradient,
       ),
       child: Scaffold(
         backgroundColor: Colors.transparent,
