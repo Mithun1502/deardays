@@ -2,7 +2,9 @@ import 'package:dear_days/features/diary/data/local_data_source.dart';
 import 'package:dear_days/features/diary/data/diary_model.dart';
 import 'package:dear_days/features/diary/presentation/pages/add_edit_page.dart';
 import 'package:dear_days/features/diary/presentation/widgets/diary_card.dart';
+import 'package:dear_days/features/settings/theme/theme_bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:intl/intl.dart';
 import 'package:dear_days/app_theme.dart';
@@ -22,8 +24,6 @@ class _DiaryListPageState extends State<DiaryListPage> {
   String _searchQuery = '';
   String? _selectedMood;
   DateTime? _selectedDate;
-
-  bool _isDark = false;
 
   @override
   void initState() {
@@ -88,16 +88,12 @@ class _DiaryListPageState extends State<DiaryListPage> {
     _loadEntries();
   }
 
-  void _toggleDarkMode() {
-    setState(() {
-      _isDark = !_isDark;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    final textColor = _isDark ? Colors.white : Colors.black87;
-    final gradient = _isDark ? darkGradient : lightGradient;
+    final isDark = context.watch<ThemeBloc>().state.isDarkMode;
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final gradient = isDark ? darkGradient : lightGradient;
+
     return Container(
       decoration: BoxDecoration(
         gradient: gradient,
@@ -114,12 +110,13 @@ class _DiaryListPageState extends State<DiaryListPage> {
           actions: [
             IconButton(
               icon: Icon(
-                _isDark ? Icons.wb_sunny : Icons.nightlight_round,
-                color: _isDark
+                isDark ? Icons.wb_sunny : Icons.nightlight_round,
+                color: isDark
                     ? const Color.fromARGB(255, 244, 244, 244)
                     : const Color.fromARGB(255, 0, 16, 45),
               ),
-              onPressed: _toggleDarkMode,
+              onPressed: () =>
+                  context.read<ThemeBloc>().add(ToggleThemeEvent()),
               tooltip: 'Toggle Dark Mode',
             ),
           ],
@@ -148,7 +145,7 @@ class _DiaryListPageState extends State<DiaryListPage> {
                       : null,
                   filled: true,
                   fillColor:
-                      _isDark ? Colors.black54 : Colors.white.withOpacity(0.9),
+                      isDark ? Colors.black54 : Colors.white.withOpacity(0.9),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -165,7 +162,7 @@ class _DiaryListPageState extends State<DiaryListPage> {
                 children: [
                   Expanded(
                     child: DropdownButton<String>(
-                      dropdownColor: _isDark ? Colors.grey[900] : Colors.white,
+                      dropdownColor: isDark ? Colors.grey[900] : Colors.white,
                       value: _selectedMood,
                       hint: Text('Filter by Mood',
                           style: TextStyle(color: textColor)),
@@ -195,7 +192,7 @@ class _DiaryListPageState extends State<DiaryListPage> {
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor:
-                          _isDark ? Colors.white10 : Colors.blueAccent,
+                          isDark ? Colors.white10 : Colors.blueAccent,
                     ),
                     onPressed: _showDatePicker,
                     icon: const Icon(Icons.calendar_today),
@@ -292,7 +289,7 @@ class _DiaryListPageState extends State<DiaryListPage> {
           ),
         ),
         floatingActionButton: FloatingActionButton(
-          backgroundColor: _isDark ? Colors.white : null,
+          backgroundColor: isDark ? Colors.white : null,
           onPressed: () async {
             final result = await Navigator.push(
               context,
@@ -300,7 +297,7 @@ class _DiaryListPageState extends State<DiaryListPage> {
             );
             if (result == true) _loadEntries();
           },
-          child: Icon(Icons.add, color: _isDark ? Colors.black : Colors.white),
+          child: Icon(Icons.add, color: isDark ? Colors.black : Colors.white),
         ),
       ),
     );
