@@ -24,8 +24,8 @@ class ThemeState extends Equatable {
 // BLoC
 class ThemeBloc extends Bloc<ThemeEvent, ThemeState> {
   ThemeBloc() : super(const ThemeState(isDarkMode: false)) {
-    on<LoadThemeEvent>((event, emit) {
-      final isDark = SharedPrefsHelper.isDarkMode;
+    on<LoadThemeEvent>((event, emit) async {
+      final isDark = await SharedPrefsHelper.isDarkMode;
       emit(ThemeState(isDarkMode: isDark));
     });
 

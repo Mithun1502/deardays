@@ -52,9 +52,9 @@ class _AddEditPageState extends State<AddEditPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = context.watch<ThemeBloc>().state.isDarkMode;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
-    final gradientColors = isDark
+    final gradientColors = isDarkMode
         ? [Colors.black, const Color.fromARGB(255, 3, 0, 22)]
         : [const Color(0xFF4D96FF), const Color.fromARGB(255, 37, 16, 227)];
 
@@ -74,12 +74,12 @@ class _AddEditPageState extends State<AddEditPage> {
           title: Text(
             widget.entry == null ? "Add Entry" : "Edit Entry",
             style: TextStyle(
-              color: isDark ? Colors.white : Colors.black87,
+              color: isDarkMode ? Colors.white : Colors.black87,
               fontWeight: FontWeight.bold,
             ),
           ),
           iconTheme: IconThemeData(
-            color: isDark ? Colors.white : Colors.black87,
+            color: isDarkMode ? Colors.white : Colors.black87,
           ),
         ),
         body: SingleChildScrollView(
