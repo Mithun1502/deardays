@@ -1,9 +1,9 @@
-import 'package:dear_days/features/settings/theme/theme_bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dear_days/features/diary/data/local_data_source.dart';
 import 'package:dear_days/features/diary/data/diary_model.dart';
 import 'package:dear_days/config/constants.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:dear_days/features/settings/theme/theme_bloc.dart';
 
 class AddEditPage extends StatefulWidget {
   final DiaryModel? entry;
@@ -52,87 +52,106 @@ class _AddEditPageState extends State<AddEditPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    return BlocBuilder<ThemeBloc, ThemeState>(
+      builder: (context, state) {
+        final isDark = state.isDarkMode;
 
-    final gradientColors = isDarkMode
-        ? [Colors.black, const Color.fromARGB(255, 3, 0, 22)]
-        : [const Color(0xFF4D96FF), const Color.fromARGB(255, 37, 16, 227)];
-
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: gradientColors,
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        appBar: AppBar(
-          elevation: 0,
-          backgroundColor: Colors.transparent,
-          title: Text(
-            widget.entry == null ? "Add Entry" : "Edit Entry",
-            style: TextStyle(
-              color: isDarkMode ? Colors.white : Colors.black87,
-              fontWeight: FontWeight.bold,
+        return Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: isDark
+                  ? [Colors.black, const Color.fromARGB(255, 3, 0, 22)]
+                  : [
+                      const Color(0xFF4D96FF),
+                      const Color.fromARGB(255, 96, 79, 213)
+                    ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
           ),
-          iconTheme: IconThemeData(
-            color: isDarkMode ? Colors.white : Colors.black87,
-          ),
-        ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppConstants.defaultPadding),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                _buildNeuromorphicTextField(
-                  controller: _titleController,
-                  label: 'Title',
-                  validatorMsg: 'Enter a title',
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            appBar: AppBar(
+              elevation: 0,
+              backgroundColor: Colors.transparent,
+              title: Text(
+                widget.entry == null ? "Add Entry" : "Edit Entry",
+                style: TextStyle(
+                  color: isDark
+                      ? Colors.white
+                      : const Color.fromARGB(255, 0, 16, 45),
+                  fontWeight: FontWeight.bold,
                 ),
-                const SizedBox(height: 16),
-                _buildNeuromorphicContentField(),
-                const SizedBox(height: 16),
-                _buildMoodDropdown(),
-                const SizedBox(height: 24),
-                _buildSaveButton(),
+              ),
+              iconTheme: IconThemeData(
+                color: isDark
+                    ? Colors.white
+                    : const Color.fromARGB(255, 0, 16, 45),
+              ),
+              actions: [
+                IconButton(
+                  icon: Icon(
+                    isDark ? Icons.wb_sunny : Icons.nightlight_round,
+                    color: isDark
+                        ? const Color.fromARGB(255, 244, 244, 244)
+                        : const Color.fromARGB(255, 0, 16, 45),
+                  ),
+                  onPressed: () {
+                    context.read<ThemeBloc>().add(ToggleThemeEvent());
+                  },
+                ),
               ],
             ),
+            body: SingleChildScrollView(
+              padding: const EdgeInsets.all(AppConstants.defaultPadding),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    _buildTextField(
+                      controller: _titleController,
+                      label: 'Title',
+                      validatorMsg: 'Enter a title',
+                      isDark: isDark,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildContentField(isDark),
+                    const SizedBox(height: 16),
+                    _buildMoodDropdown(isDark),
+                    const SizedBox(height: 24),
+                    _buildSaveButton(isDark),
+                  ],
+                ),
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildNeuromorphicTextField({
+  Widget _buildTextField({
     required TextEditingController controller,
     required String label,
     required String validatorMsg,
+    required bool isDark,
   }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final fillColor =
-        isDark ? const Color(0xFF2C2F48) : const Color(0xFFEDF4FF);
-
     return TextFormField(
       controller: controller,
-      style: TextStyle(color: isDark ? Colors.white : Colors.black),
+      style: TextStyle(
+        color: isDark ? Colors.white : const Color.fromARGB(255, 0, 16, 45),
+      ),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(color: isDark ? Colors.white70 : Colors.black54),
-        filled: true,
-        fillColor: fillColor,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+        labelStyle: TextStyle(
+          color: isDark ? Colors.white70 : Colors.black,
         ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(
-            color: isDark ? Colors.white24 : Colors.black12,
-            width: 1,
-          ),
+        filled: true,
+        fillColor: isDark
+            ? Colors.black.withOpacity(0.2)
+            : Colors.white.withOpacity(0.9),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
         ),
       ),
       validator: (value) =>
@@ -140,58 +159,44 @@ class _AddEditPageState extends State<AddEditPage> {
     );
   }
 
-  Widget _buildNeuromorphicContentField() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final fillColor =
-        isDark ? const Color(0xFF2C2F48) : const Color(0xFFEDF4FF);
-
-    return TextFormField(
-      controller: _contentController,
-      style: TextStyle(color: isDark ? Colors.white : Colors.black),
-      minLines: 6,
-      maxLines: null,
-      decoration: InputDecoration(
-        labelText: 'Content',
-        labelStyle: TextStyle(color: isDark ? Colors.white70 : Colors.black54),
-        filled: true,
-        fillColor: fillColor,
-        alignLabelWithHint: true,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(
-            color: isDark ? Colors.white24 : Colors.black12,
-            width: 1,
-          ),
+  Widget _buildContentField(bool isDark) {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 150),
+      child: TextFormField(
+        controller: _contentController,
+        style: TextStyle(color: isDark ? Colors.white : Colors.black),
+        decoration: InputDecoration(
+          labelText: 'Content',
+          labelStyle: TextStyle(color: isDark ? Colors.white70 : Colors.black),
+          alignLabelWithHint: true,
+          filled: true,
+          fillColor: isDark
+              ? Colors.black.withOpacity(0.2)
+              : Colors.white.withOpacity(0.9),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         ),
+        keyboardType: TextInputType.multiline,
+        maxLines: null,
+        minLines: 6,
+        validator: (value) =>
+            value == null || value.isEmpty ? 'Write something...' : null,
       ),
-      validator: (value) =>
-          value == null || value.isEmpty ? 'Write something...' : null,
     );
   }
 
-  Widget _buildMoodDropdown() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final fillColor =
-        isDark ? const Color(0xFF2C2F48) : const Color(0xFFEDF4FF);
-
+  Widget _buildMoodDropdown(bool isDark) {
     return DropdownButtonFormField<String>(
       value: _mood,
-      dropdownColor: isDark ? const Color(0xFF2C2F48) : Colors.white,
+      dropdownColor: isDark ? Colors.grey[900] : Colors.white,
       style: TextStyle(color: isDark ? Colors.white : Colors.black),
       decoration: InputDecoration(
         labelText: 'Mood',
-        labelStyle: TextStyle(color: isDark ? Colors.white70 : Colors.black54),
+        labelStyle: TextStyle(color: isDark ? Colors.white70 : Colors.black),
         filled: true,
-        fillColor: fillColor,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(
-            color: isDark ? Colors.white24 : Colors.black12,
-            width: 1,
-          ),
-        ),
+        fillColor: isDark
+            ? Colors.black.withOpacity(0.2)
+            : Colors.white.withOpacity(0.9),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       ),
       items: ['Happy 😊', 'Sad 😢', 'Angry 😠', 'Excited 🤩', 'Calm 😌']
           .map((m) => DropdownMenuItem(value: m, child: Text(m)))
@@ -204,27 +209,26 @@ class _AddEditPageState extends State<AddEditPage> {
     );
   }
 
-  Widget _buildSaveButton() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
+  Widget _buildSaveButton(bool isDark) {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
-          backgroundColor: isDark ? Colors.white : const Color(0xFF4D96FF),
+          backgroundColor:
+              isDark ? Colors.white : const Color.fromARGB(255, 0, 16, 45),
           padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+          textStyle: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
           ),
-          elevation: 6,
-          shadowColor: isDark ? Colors.black54 : Colors.blueAccent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
         onPressed: _saveEntry,
         child: Text(
           widget.entry == null ? 'Save' : 'Update',
           style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
             color: isDark ? Colors.black : Colors.white,
           ),
         ),

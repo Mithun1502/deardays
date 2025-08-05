@@ -114,12 +114,18 @@ class _DiaryListPageState extends State<DiaryListPage> {
         appBar: AppBar(
           elevation: 0,
           backgroundColor: Colors.transparent,
-          title: Text('Dear Days', style: TextStyle(color: textColor)),
+          title: Text('Dear Days',
+              style: TextStyle(
+                  color: textColor, fontWeight: FontWeight.bold, fontSize: 26)),
           iconTheme: IconThemeData(color: textColor),
           actions: [
             IconButton(
-              icon: Icon(_isDark ? Icons.light_mode : Icons.dark_mode,
-                  color: textColor),
+              icon: Icon(
+                _isDark ? Icons.wb_sunny : Icons.nightlight_round,
+                color: _isDark
+                    ? const Color.fromARGB(255, 244, 244, 244)
+                    : const Color.fromARGB(255, 0, 16, 45),
+              ),
               onPressed: _toggleDarkMode,
               tooltip: 'Toggle Dark Mode',
             ),
