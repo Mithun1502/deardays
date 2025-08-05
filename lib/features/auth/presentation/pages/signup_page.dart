@@ -1,5 +1,3 @@
-import 'package:dear_days/features/auth/bloc/auth_event.dart';
-import 'package:dear_days/features/auth/bloc/auth_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dear_days/features/auth/bloc/auth_bloc.dart';
@@ -18,7 +16,7 @@ class _SignupPageState extends State<SignupPage> {
   void _signup() {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
-    context.read<AuthBloc>().add(SignUpWithEmail(email, password));
+    context.read<AuthBloc>().add(SignUpWithEmailEvent(email, password));
   }
 
   @override
@@ -27,12 +25,12 @@ class _SignupPageState extends State<SignupPage> {
       appBar: AppBar(title: const Text('Sign Up')),
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
-          if (state is Authenticated) {
-            Navigator.pop(context);
+          if (state is AuthSuccess) {
+            Navigator.pushReplacementNamed(context, '/home');
           }
-          if (state is AuthError) {
+          if (state is AuthFailure) {
             ScaffoldMessenger.of(context)
-                .showSnackBar(SnackBar(content: Text(state.message)));
+                .showSnackBar(SnackBar(content: Text(state.error)));
           }
         },
         builder: (context, state) {

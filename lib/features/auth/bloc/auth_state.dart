@@ -1,14 +1,32 @@
-abstract class AuthState {}
+part of 'auth_bloc.dart';
+
+abstract class AuthState extends Equatable {
+  @override
+  List<Object?> get props => [];
+}
 
 class AuthInitial extends AuthState {}
 
 class AuthLoading extends AuthState {}
 
-class Authenticated extends AuthState {}
+class AuthSuccess extends AuthState {
+  final User? user;
 
-class Unauthenticated extends AuthState {}
+  AuthSuccess([this.user]);
 
-class AuthError extends AuthState {
-  final String message;
-  AuthError(this.message);
+  @override
+  List<Object?> get props => [user ?? ''];
 }
+
+class AuthFailure extends AuthState {
+  final String error;
+
+  AuthFailure(this.error);
+
+  @override
+  List<Object?> get props => [error];
+}
+
+class OtpSent extends AuthState {}
+
+class OtpTimeout extends AuthState {}

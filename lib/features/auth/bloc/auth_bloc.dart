@@ -1,58 +1,86 @@
 import 'package:bloc/bloc.dart';
+import 'package:dear_days/features/auth/data/auth_repository.dart';
+import 'package:equatable/equatable.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../data/auth_repository.dart';
-import 'auth_event.dart';
-import 'auth_state.dart';
+
+part 'auth_event.dart';
+part 'auth_state.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository authRepository;
+  final FirebaseAuth auth = FirebaseAuth.instance;
+  String? verificationIdStored;
 
   AuthBloc({required this.authRepository}) : super(AuthInitial()) {
-    on<AppStarted>((event, emit) {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        emit(Authenticated());
-      } else {
-        emit(Unauthenticated());
-      }
-    });
-
-    on<LoginWithEmail>((event, emit) async {
+    on<LoginWithEmailEvent>((event, emit) async {
       emit(AuthLoading());
       try {
         await authRepository.loginWithEmail(event.email, event.password);
-        emit(Authenticated());
+        emit(AuthSuccess());
       } catch (e) {
-        emit(AuthError(e.toString()));
-        emit(Unauthenticated());
+        emit(AuthFailure(e.toString()));
       }
     });
 
-    on<SignUpWithEmail>((event, emit) async {
+    on<SignUpWithEmailEvent>((event, emit) async {
       emit(AuthLoading());
       try {
         await authRepository.signUpWithEmail(event.email, event.password);
-        emit(Authenticated());
+        emit(AuthSuccess());
       } catch (e) {
-        emit(AuthError(e.toString()));
-        emit(Unauthenticated());
+        emit(AuthFailure(e.toString()));
       }
     });
 
-    on<SignOut>((event, emit) async {
-      await authRepository.signOut();
-      emit(Unauthenticated());
-    });
-
-    on<LoginWithGoogle>((event, emit) async {
+    on<SignInWithGoogleEvent>((event, emit) async {
       emit(AuthLoading());
       try {
         await authRepository.signInWithGoogle();
-        emit(Authenticated());
+        emit(AuthSuccess());
       } catch (e) {
-        emit(AuthError(e.toString()));
-        emit(Unauthenticated());
+        emit(AuthFailure(e.toString()));
       }
+    });
+
+    on<SendOtpEvent>((event, emit) async {
+      emit(AuthLoading());
+      try {
+        await authRepository.sendOtp(
+          phoneNumber: event.phoneNumber,
+          codeSent: (verificationId) {
+            verificationIdStored = verificationId;
+            emit(OtpSent());
+          },
+          onFailed: (e) {
+            emit(AuthFailure(e.message ?? "OTP Send Failed"));
+          },
+          onCompleted: (credential) async {
+            await FirebaseAuth.instance.signInWithCredential(credential);
+            emit(AuthSuccess(FirebaseAuth.instance.currentUser!));
+          },
+          onTimeout: (String verificationId) {
+            verificationIdStored = verificationId;
+            emit(OtpTimeout());
+          },
+        );
+      } catch (e) {
+        emit(AuthFailure(e.toString()));
+      }
+    });
+
+    on<VerifyOtpEvent>((event, emit) async {
+      emit(AuthLoading());
+      try {
+        await authRepository.verifyOtp(event.verificationId, event.otp);
+        emit(AuthSuccess());
+      } catch (e) {
+        emit(AuthFailure(e.toString()));
+      }
+    });
+
+    on<SignOutEvent>((event, emit) async {
+      await authRepository.signOut();
+      emit(AuthInitial());
     });
   }
 }
