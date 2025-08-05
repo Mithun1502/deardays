@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 import 'package:dear_days/features/auth/bloc/auth_bloc.dart';
-
 import 'package:dear_days/features/auth/data/auth_repository.dart';
 import 'package:dear_days/features/auth/presentation/pages/login_page.dart';
 import 'package:dear_days/features/auth/presentation/pages/signup_page.dart';
@@ -67,7 +66,7 @@ class RootPage extends StatelessWidget {
           return const DiaryListPage();
         } else if (state is AuthFailure) {
           return const LoginPage();
-        } else if (state is AuthLoading) {
+        } else if (state is AuthLoading || state is AuthInitial) {
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );

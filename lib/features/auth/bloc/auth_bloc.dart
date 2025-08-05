@@ -16,7 +16,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthLoading());
       try {
         await authRepository.loginWithEmail(event.email, event.password);
-        emit(AuthSuccess());
+        emit(AuthSuccess(FirebaseAuth.instance.currentUser));
       } catch (e) {
         emit(AuthFailure(e.toString()));
       }
@@ -26,7 +26,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthLoading());
       try {
         await authRepository.signUpWithEmail(event.email, event.password);
-        emit(AuthSuccess());
+        emit(AuthSuccess(FirebaseAuth.instance.currentUser));
       } catch (e) {
         emit(AuthFailure(e.toString()));
       }
@@ -36,7 +36,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthLoading());
       try {
         await authRepository.signInWithGoogle();
-        emit(AuthSuccess());
+        emit(AuthSuccess(FirebaseAuth.instance.currentUser));
       } catch (e) {
         emit(AuthFailure(e.toString()));
       }
@@ -49,14 +49,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           phoneNumber: event.phoneNumber,
           codeSent: (verificationId) {
             verificationIdStored = verificationId;
-            emit(OtpSent());
+            emit(OtpSent(verificationId));
           },
           onFailed: (e) {
             emit(AuthFailure(e.message ?? "OTP Send Failed"));
           },
           onCompleted: (credential) async {
             await FirebaseAuth.instance.signInWithCredential(credential);
-            emit(AuthSuccess(FirebaseAuth.instance.currentUser!));
+            emit(AuthSuccess(FirebaseAuth.instance.currentUser));
           },
           onTimeout: (String verificationId) {
             verificationIdStored = verificationId;
@@ -72,7 +72,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthLoading());
       try {
         await authRepository.verifyOtp(event.verificationId, event.otp);
-        emit(AuthSuccess());
+        emit(AuthSuccess(FirebaseAuth.instance.currentUser));
       } catch (e) {
         emit(AuthFailure(e.toString()));
       }
@@ -81,6 +81,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<SignOutEvent>((event, emit) async {
       await authRepository.signOut();
       emit(AuthInitial());
+    });
+
+    on<AppStarted>((event, emit) async {
+      final user = auth.currentUser;
+      if (user != null) {
+        emit(AuthSuccess(FirebaseAuth.instance.currentUser));
+      } else {
+        emit(AuthInitial());
+      }
     });
   }
 }

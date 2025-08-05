@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dear_days/features/auth/bloc/auth_bloc.dart';
-import 'package:dear_days/features/auth/bloc/auth_bloc.dart';
-import 'package:dear_days/features/auth/bloc/auth_bloc.dart';
 import 'package:dear_days/features/auth/data/auth_repository.dart';
 
 class LoginPage extends StatefulWidget {
@@ -84,6 +82,22 @@ class _LoginPageState extends State<LoginPage> {
                     child: const Text("Don't have an account? Sign up"),
                   ),
                   const SizedBox(height: 12),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      context.read<AuthBloc>().add(SignInWithGoogleEvent());
+                    },
+                    icon: Icon(Icons.login),
+                    label: Text("Sign in with Google"),
+                  ),
+                  const SizedBox(height: 12),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/phone-login');
+                    },
+                    icon: Icon(Icons.phone),
+                    label: Text("Login with Phone Number"),
+                  ),
+                  const SizedBox(height: 24),
                   BlocBuilder<AuthBloc, AuthState>(
                     builder: (context, state) {
                       if (state is AuthLoading) {

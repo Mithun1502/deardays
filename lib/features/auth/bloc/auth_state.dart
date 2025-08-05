@@ -27,6 +27,13 @@ class AuthFailure extends AuthState {
   List<Object?> get props => [error];
 }
 
-class OtpSent extends AuthState {}
+class OtpSent extends AuthState {
+  final String verificationId;
+
+  OtpSent(this.verificationId);
+
+  @override
+  List<Object?> get props => [verificationId];
+}
 
 class OtpTimeout extends AuthState {}
