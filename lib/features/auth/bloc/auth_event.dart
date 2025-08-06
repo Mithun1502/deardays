@@ -38,6 +38,23 @@ class SendOtpEvent extends AuthEvent {
   List<Object?> get props => [phoneNumber];
 }
 
+class VerifyPhoneAuthCredentialEvent extends AuthEvent {
+  final PhoneAuthCredential credential;
+  VerifyPhoneAuthCredentialEvent(this.credential);
+}
+
+class OtpFailedEvent extends AuthEvent {
+  final String error;
+  OtpFailedEvent(this.error);
+}
+
+class OtpCodeSentEvent extends AuthEvent {
+  final String verificationId;
+  OtpCodeSentEvent(this.verificationId);
+}
+
+class OtpTimeoutEvent extends AuthEvent {}
+
 class VerifyOtpEvent extends AuthEvent {
   final String verificationId;
   final String otp;

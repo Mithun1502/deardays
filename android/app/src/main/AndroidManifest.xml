@@ -2,6 +2,7 @@
     package="com.deardays.app">
 
     <application
+        android:name="${applicationName}" 
         android:label="deardays"
         android:icon="@mipmap/ic_launcher">
 

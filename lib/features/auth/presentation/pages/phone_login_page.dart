@@ -75,7 +75,7 @@ class _PhoneLoginPageState extends State<PhoneLoginPage> {
                       controller: _phoneController,
                       keyboardType: TextInputType.phone,
                       decoration: const InputDecoration(
-                        labelText: 'Phone Number',
+                        labelText: 'Phone Number (e.g. +919876543210)',
                         border: OutlineInputBorder(),
                       ),
                     ),

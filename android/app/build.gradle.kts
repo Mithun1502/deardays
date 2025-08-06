@@ -1,7 +1,7 @@
 plugins {
     id("com.android.application")
     id("kotlin-android")
-    id("com.google.gms.google-services") // ✅ ADD THIS LINE
+    id("com.google.gms.google-services") 
     id("dev.flutter.flutter-gradle-plugin")
 }
 
@@ -38,5 +38,3 @@ flutter {
     source = "../.."
 }
 
-// ✅ ADD THIS LINE AT THE END
-apply(plugin = "com.google.gms.google-services")

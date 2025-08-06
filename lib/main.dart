@@ -1,3 +1,4 @@
+import 'package:dear_days/features/auth/presentation/pages/phone_login_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -14,8 +15,19 @@ import 'package:dear_days/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
-  await SharedPrefsHelper.init();
+
+  try {
+    print("🔧 Initializing Firebase...");
+    await Firebase.initializeApp();
+    print("✅ Firebase initialized");
+
+    print("🔧 Initializing SharedPrefs...");
+    await SharedPrefsHelper.init();
+    print("✅ SharedPrefs initialized");
+  } catch (e, st) {
+    print("❌ Initialization error: $e");
+    print("🔍 Stack trace:\n$st");
+  }
 
   runApp(const DearDaysApp());
 }
@@ -40,6 +52,7 @@ class DearDaysApp extends StatelessWidget {
         builder: (context, themeState) {
           return MaterialApp(
             debugShowCheckedModeBanner: false,
+            title: 'Dear Days',
             theme: themeState.isDarkMode ? darkTheme : lightTheme,
             initialRoute: '/',
             routes: {
@@ -47,6 +60,7 @@ class DearDaysApp extends StatelessWidget {
               '/login': (context) => const LoginPage(),
               '/signup': (context) => const SignupPage(),
               '/home': (context) => const DiaryListPage(),
+              '/phone-login': (context) => const PhoneLoginPage(),
             },
           );
         },
@@ -62,6 +76,8 @@ class RootPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
+        print("Auth state: $state");
+
         if (state is AuthSuccess) {
           return const DiaryListPage();
         } else if (state is AuthFailure) {
