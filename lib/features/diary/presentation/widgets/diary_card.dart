@@ -21,7 +21,7 @@ class DiaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8),
-      shape: RoundedRectangleBorder(
+      shape: const RoundedRectangleBorder(
         borderRadius: AppConstants.defaultBorderRadius,
       ),
       elevation: 3,

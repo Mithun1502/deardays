@@ -14,8 +14,9 @@ class SharedPrefsHelper {
     await _prefs.setBool(AppConstants.keyIsDarkMode, isDark);
   }
 
-  static bool get isDarkMode =>
-      _prefs.getBool(AppConstants.keyIsDarkMode) ?? false;
+  static Future<bool> get isDarkMode async {
+    return _prefs.getBool(AppConstants.keyIsDarkMode) ?? false;
+  }
 
   // PIN Code
   static Future<void> savePin(String pin) async {

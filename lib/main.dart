@@ -1,17 +1,18 @@
-import 'package:dear_days/features/auth/presentation/pages/phone_login_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
 
+import 'package:dear_days/app_theme.dart';
 import 'package:dear_days/features/auth/bloc/auth_bloc.dart';
 import 'package:dear_days/features/auth/data/auth_repository.dart';
 import 'package:dear_days/features/auth/presentation/pages/login_page.dart';
 import 'package:dear_days/features/auth/presentation/pages/signup_page.dart';
+import 'package:dear_days/features/auth/presentation/pages/phone_login_page.dart';
+import 'package:dear_days/features/auth/presentation/pages/signout_page.dart';
 import 'package:dear_days/features/diary/bloc/diary_bloc.dart';
 import 'package:dear_days/features/diary/presentation/pages/diary_list_page.dart';
 import 'package:dear_days/features/settings/theme/theme_bloc.dart';
 import 'package:dear_days/core/utils/shared_prefs_helper.dart';
-import 'package:dear_days/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -45,7 +46,7 @@ class DearDaysApp extends StatelessWidget {
           create: (_) =>
               AuthBloc(authRepository: authRepository)..add(AppStarted()),
         ),
-        BlocProvider(create: (_) => ThemeBloc()),
+        BlocProvider(create: (_) => ThemeBloc()..add(LoadThemeEvent())),
         BlocProvider(create: (_) => DiaryBloc()),
       ],
       child: BlocBuilder<ThemeBloc, ThemeState>(
@@ -61,6 +62,7 @@ class DearDaysApp extends StatelessWidget {
               '/signup': (context) => const SignupPage(),
               '/home': (context) => const DiaryListPage(),
               '/phone-login': (context) => const PhoneLoginPage(),
+              '/signout': (context) => const SignOutPage(),
             },
           );
         },
@@ -88,7 +90,7 @@ class RootPage extends StatelessWidget {
           );
         } else {
           return const Scaffold(
-            body: Center(child: Text("Checking authentication...")),
+            body: Center(child: Text("🔄 Checking authentication...")),
           );
         }
       },

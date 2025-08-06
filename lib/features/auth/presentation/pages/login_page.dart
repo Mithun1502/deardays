@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dear_days/features/auth/bloc/auth_bloc.dart';
 import 'package:dear_days/features/settings/theme/theme_bloc.dart';
 import 'package:dear_days/app_theme.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -41,6 +42,8 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     final isDark = context.watch<ThemeBloc>().state.isDarkMode;
     final gradient = isDark ? darkGradient : lightGradient;
+    bool _obscurePassword = true;
+
     return Container(
       decoration: BoxDecoration(
         gradient: gradient,
@@ -83,6 +86,7 @@ class _LoginPageState extends State<LoginPage> {
                   decoration: InputDecoration(
                     labelText: 'Email',
                     labelStyle: TextStyle(
+                        fontSize: 19,
                         color: isDark
                             ? Colors.white
                             : const Color.fromARGB(255, 1, 14, 24)),
@@ -92,14 +96,28 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(height: 20),
                 TextField(
                   controller: _passwordController,
-                  obscureText: true,
+                  obscureText: _obscurePassword,
                   decoration: InputDecoration(
                     labelText: 'Password',
                     labelStyle: TextStyle(
+                        fontSize: 19,
                         color: isDark
                             ? Colors.white
                             : const Color.fromARGB(255, 1, 14, 24)),
                     border: const OutlineInputBorder(),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility
+                            : Icons.visibility_off,
+                        color: isDark ? Colors.white : Colors.black,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscurePassword = !_obscurePassword;
+                        });
+                      },
+                    ),
                   ),
                 ),
                 const SizedBox(height: 30),
@@ -111,7 +129,7 @@ class _LoginPageState extends State<LoginPage> {
                     child: Text(
                       'Login',
                       style: TextStyle(
-                          fontSize: 18,
+                          fontSize: 20,
                           color: isDark
                               ? Colors.white
                               : const Color.fromARGB(255, 1, 14, 24),
@@ -161,6 +179,33 @@ class _LoginPageState extends State<LoginPage> {
                     ],
                   ),
                 ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: 150,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white.withOpacity(0.1),
+                      foregroundColor: Colors.black87,
+                      minimumSize: const Size(30, 60),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    label: Text(
+                      'Sign in with Google',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: isDark
+                            ? Colors.white
+                            : const Color.fromARGB(255, 1, 14, 24),
+                      ),
+                    ),
+                    onPressed: () {
+                      context.read<AuthBloc>().add(SignInWithGoogleEvent());
+                    },
+                  ),
+                )
               ],
             ),
           ),

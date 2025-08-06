@@ -2,6 +2,7 @@ import 'package:bloc/bloc.dart';
 import 'package:dear_days/features/auth/data/auth_repository.dart';
 import 'package:equatable/equatable.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 part 'auth_event.dart';
 part 'auth_state.dart';
@@ -112,11 +113,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(AuthFailure(e.toString()));
       }
     });
-
     on<SignOutEvent>((event, emit) async {
       await authRepository.signOut();
       if (emit.isDone) return;
-      emit(AuthInitial());
+      emit(AuthFailure("Logged out"));
     });
   }
 }

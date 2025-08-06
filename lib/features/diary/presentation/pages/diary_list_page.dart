@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dear_days/features/diary/data/local_data_source.dart';
 import 'package:dear_days/features/diary/data/diary_model.dart';
 import 'package:dear_days/features/diary/presentation/pages/add_edit_page.dart';
@@ -8,6 +10,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:intl/intl.dart';
 import 'package:dear_days/app_theme.dart';
+import 'package:dear_days/features/auth/bloc/auth_bloc.dart';
 
 class DiaryListPage extends StatefulWidget {
   const DiaryListPage({super.key});
@@ -103,9 +106,14 @@ class _DiaryListPageState extends State<DiaryListPage> {
         appBar: AppBar(
           elevation: 0,
           backgroundColor: Colors.transparent,
-          title: Text('Dear Days',
-              style: TextStyle(
-                  color: textColor, fontWeight: FontWeight.bold, fontSize: 26)),
+          title: Text(
+            'Dear Days',
+            style: TextStyle(
+              color: textColor,
+              fontWeight: FontWeight.bold,
+              fontSize: 26,
+            ),
+          ),
           iconTheme: IconThemeData(color: textColor),
           actions: [
             IconButton(
@@ -118,6 +126,28 @@ class _DiaryListPageState extends State<DiaryListPage> {
               onPressed: () =>
                   context.read<ThemeBloc>().add(ToggleThemeEvent()),
               tooltip: 'Toggle Dark Mode',
+            ),
+            PopupMenuButton<String>(
+              icon: Icon(Icons.more_vert, color: textColor),
+              onSelected: (value) {
+                if (value == 'logout') {
+                  context.read<AuthBloc>().add(SignOutEvent());
+                  Navigator.pushNamedAndRemoveUntil(
+                      context, '/login', (route) => false);
+                }
+              },
+              itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                const PopupMenuItem<String>(
+                  value: 'logout',
+                  child: Row(
+                    children: [
+                      Icon(Icons.logout, color: Colors.black54),
+                      SizedBox(width: 10),
+                      Text('Sign Out'),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ],
           centerTitle: true,
@@ -263,18 +293,70 @@ class _DiaryListPageState extends State<DiaryListPage> {
                                     child: Padding(
                                       padding:
                                           const EdgeInsets.only(bottom: 16.0),
-                                      child: DiaryCard(
-                                        entry: entry,
-                                        onTap: () async {
-                                          final result = await Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (_) =>
-                                                  AddEditPage(entry: entry),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
+                                        children: [
+                                          DiaryCard(
+                                            entry: entry,
+                                            onTap: () async {
+                                              final result =
+                                                  await Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (_) =>
+                                                      AddEditPage(entry: entry),
+                                                ),
+                                              );
+                                              if (result == true)
+                                                _loadEntries();
+                                            },
+                                          ),
+                                          if (entry.mediaPaths != null &&
+                                              entry.mediaPaths!.isNotEmpty)
+                                            SizedBox(
+                                              height: 100,
+                                              child: ListView(
+                                                scrollDirection:
+                                                    Axis.horizontal,
+                                                children: entry.mediaPaths!
+                                                    .map((path) => Padding(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .only(
+                                                                  right: 8.0,
+                                                                  top: 8),
+                                                          child: ClipRRect(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        8),
+                                                            child: Image.file(
+                                                              File(path),
+                                                              width: 100,
+                                                              height: 100,
+                                                              fit: BoxFit.cover,
+                                                              errorBuilder:
+                                                                  (context,
+                                                                          error,
+                                                                          stackTrace) =>
+                                                                      Container(
+                                                                width: 100,
+                                                                height: 100,
+                                                                color: Colors
+                                                                    .grey
+                                                                    .shade300,
+                                                                child: const Icon(
+                                                                    Icons
+                                                                        .broken_image),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ))
+                                                    .toList(),
+                                              ),
                                             ),
-                                          );
-                                          if (result == true) _loadEntries();
-                                        },
+                                        ],
                                       ),
                                     ),
                                   ),

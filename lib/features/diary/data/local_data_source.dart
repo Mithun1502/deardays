@@ -21,7 +21,7 @@ class LocalDataSource {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2, // 🔼 Version updated from 1 to 2
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE diary_entries (
@@ -29,9 +29,17 @@ class LocalDataSource {
             title TEXT NOT NULL,
             content TEXT NOT NULL,
             dateTime TEXT NOT NULL,
-            mood TEXT
+            mood TEXT,
+            mediaPaths TEXT -- ✅ New column added
           )
         ''');
+      },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          // 🔧 Add column for existing users
+          await db
+              .execute('ALTER TABLE diary_entries ADD COLUMN mediaPaths TEXT');
+        }
       },
     );
   }
@@ -54,8 +62,10 @@ class LocalDataSource {
     return result.map((map) => DiaryModel.fromMap(map)).toList();
   }
 
-  Future<List<DiaryModel>> getFilteredEntries(
-      {String? dateTime, String? mood}) async {
+  Future<List<DiaryModel>> getFilteredEntries({
+    String? dateTime,
+    String? mood,
+  }) async {
     final db = await database;
     final whereClauses = <String>[];
     final whereArgs = <dynamic>[];

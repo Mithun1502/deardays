@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "65189461013-qt7jmvd579f3v7mh0r0nrkrpag747plj.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.deardays.app",
+            "certificate_hash": "fe6f87dc24dafd04e2567466c7b6c58813f33064"
+          }
+        },
+        {
           "client_id": "65189461013-1rl6muhjqgno5kt6ipjse91lf6ioknpm.apps.googleusercontent.com",
           "client_type": 3
         }

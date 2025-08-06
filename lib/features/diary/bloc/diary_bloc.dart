@@ -1,4 +1,3 @@
-// 📁 diary_bloc.dart
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:dear_days/features/diary/data/diary_model.dart';

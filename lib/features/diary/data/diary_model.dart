@@ -4,6 +4,7 @@ class DiaryModel {
   final String content;
   final String dateTime;
   final String? mood;
+  final List<String> mediaPaths;
 
   DiaryModel({
     this.id,
@@ -11,6 +12,7 @@ class DiaryModel {
     required this.content,
     required this.dateTime,
     this.mood,
+    required this.mediaPaths,
   });
 
   Map<String, dynamic> toMap() {
@@ -20,6 +22,7 @@ class DiaryModel {
       'content': content,
       'dateTime': dateTime,
       'mood': mood,
+      'mediaPaths': mediaPaths.join(','),
     };
   }
 
@@ -30,6 +33,9 @@ class DiaryModel {
       content: map['content'],
       dateTime: map['dateTime'],
       mood: map['mood'],
+      mediaPaths: map['mediaPaths'] != null && map['mediaPaths'] != ''
+          ? (map['mediaPaths'] as String).split(',')
+          : [],
     );
   }
 }
