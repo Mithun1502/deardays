@@ -1,67 +1,179 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dear_days/features/auth/bloc/auth_bloc.dart';
+import 'package:dear_days/features/settings/theme/theme_bloc.dart';
+import 'package:dear_days/app_theme.dart';
 
 class SignupPage extends StatefulWidget {
-  const SignupPage({Key? key}) : super(key: key);
+  const SignupPage({super.key});
 
   @override
   State<SignupPage> createState() => _SignupPageState();
 }
 
 class _SignupPageState extends State<SignupPage> {
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
 
-  void _signup() {
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  void _signup(BuildContext context) {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
-    context.read<AuthBloc>().add(SignUpWithEmailEvent(email, password));
+
+    if (email.isNotEmpty && password.isNotEmpty) {
+      context.read<AuthBloc>().add(
+            SignUpWithEmailEvent(email, password),
+          );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please enter email and password")),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Sign Up')),
-      body: BlocConsumer<AuthBloc, AuthState>(
-        listener: (context, state) {
-          if (state is AuthSuccess) {
-            Navigator.pushReplacementNamed(context, '/home');
-          }
-          if (state is AuthFailure) {
-            ScaffoldMessenger.of(context)
-                .showSnackBar(SnackBar(content: Text(state.error)));
-          }
-        },
-        builder: (context, state) {
-          if (state is AuthLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
+    final isDark = context.watch<ThemeBloc>().state.isDarkMode;
+    final gradient = isDark ? darkGradient : lightGradient;
 
-          return Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                TextField(
-                  controller: _emailController,
-                  decoration: const InputDecoration(labelText: 'Email'),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _passwordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(labelText: 'Password'),
-                ),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: _signup,
-                  child: const Text('Sign Up'),
-                ),
-              ],
-            ),
+    return BlocConsumer<AuthBloc, AuthState>(
+      listener: (context, state) {
+        if (state is AuthSuccess) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Signup successful!")),
           );
-        },
-      ),
+          Navigator.pushReplacementNamed(context, '/home');
+        }
+
+        if (state is AuthFailure) {
+          String errorMsg = state.error;
+          if (errorMsg.contains("email-already-in-use")) {
+            errorMsg =
+                "This email is already registered. Please login instead.";
+            Future.delayed(const Duration(seconds: 2), () {
+              Navigator.pushReplacementNamed(context, '/login');
+            });
+          }
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(errorMsg)),
+          );
+        }
+      },
+      builder: (context, state) {
+        return Container(
+          decoration: BoxDecoration(
+            gradient: gradient,
+          ),
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            body: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: ListView(
+                  children: [
+                    const SizedBox(height: 20),
+                    Align(
+                      alignment: Alignment.topRight,
+                      child: IconButton(
+                        icon: Icon(
+                          isDark ? Icons.wb_sunny : Icons.nightlight_round,
+                          color:
+                              isDark ? Colors.white : Colors.blueGrey.shade800,
+                        ),
+                        onPressed: () {
+                          context.read<ThemeBloc>().add(ToggleThemeEvent());
+                        },
+                        tooltip: 'Toggle Dark Mode',
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      'Sign Up',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: isDark
+                            ? Colors.white
+                            : const Color.fromARGB(255, 1, 14, 24),
+                      ),
+                    ),
+                    const SizedBox(height: 40),
+                    TextField(
+                      controller: _emailController,
+                      decoration: InputDecoration(
+                        labelText: 'Email',
+                        labelStyle: TextStyle(
+                          color: isDark
+                              ? Colors.white
+                              : const Color.fromARGB(255, 1, 14, 24),
+                        ),
+                        border: const OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    TextField(
+                      controller: _passwordController,
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        labelText: 'Password',
+                        labelStyle: TextStyle(
+                          color: isDark
+                              ? Colors.white
+                              : const Color.fromARGB(255, 1, 14, 24),
+                        ),
+                        border: const OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: state is AuthLoading
+                          ? const Center(child: CircularProgressIndicator())
+                          : ElevatedButton(
+                              onPressed: () => _signup(context),
+                              child: Text(
+                                'Sign Up',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  color: isDark
+                                      ? Colors.white
+                                      : const Color.fromARGB(255, 1, 14, 24),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                    ),
+                    const SizedBox(height: 15),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/login');
+                      },
+                      child: Text(
+                        "Already have an account? Login",
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: isDark
+                              ? Colors.white
+                              : const Color.fromARGB(255, 1, 14, 24),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
