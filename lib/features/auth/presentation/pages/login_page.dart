@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dear_days/features/auth/bloc/auth_bloc.dart';
 import 'package:dear_days/features/settings/theme/theme_bloc.dart';
 import 'package:dear_days/app_theme.dart';
-import 'package:google_sign_in/google_sign_in.dart';
+//import 'package:google_sign_in/google_sign_in.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -15,6 +15,7 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
@@ -42,7 +43,6 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     final isDark = context.watch<ThemeBloc>().state.isDarkMode;
     final gradient = isDark ? darkGradient : lightGradient;
-    bool _obscurePassword = true;
 
     return Container(
       decoration: BoxDecoration(
@@ -90,7 +90,9 @@ class _LoginPageState extends State<LoginPage> {
                         color: isDark
                             ? Colors.white
                             : const Color.fromARGB(255, 1, 14, 24)),
-                    border: const OutlineInputBorder(),
+                    enabledBorder: const OutlineInputBorder(
+                        borderSide:
+                            BorderSide(color: Color.fromARGB(255, 1, 14, 24))),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -100,11 +102,19 @@ class _LoginPageState extends State<LoginPage> {
                   decoration: InputDecoration(
                     labelText: 'Password',
                     labelStyle: TextStyle(
-                        fontSize: 19,
-                        color: isDark
-                            ? Colors.white
-                            : const Color.fromARGB(255, 1, 14, 24)),
-                    border: const OutlineInputBorder(),
+                      fontSize: 19,
+                      color: isDark
+                          ? Colors.white
+                          : const Color.fromARGB(255, 1, 14, 24),
+                    ),
+                    enabledBorder: const OutlineInputBorder(
+                      borderSide:
+                          BorderSide(color: Color.fromARGB(255, 1, 14, 24)),
+                    ),
+                    focusedBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(
+                          color: Color.fromARGB(255, 19, 50, 75), width: 2.0),
+                    ),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscurePassword
@@ -184,6 +194,7 @@ class _LoginPageState extends State<LoginPage> {
                   width: 150,
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
+                      // ignore: deprecated_member_use
                       backgroundColor: Colors.white.withOpacity(0.1),
                       foregroundColor: Colors.black87,
                       minimumSize: const Size(30, 60),

@@ -3,6 +3,7 @@ import 'package:dear_days/features/auth/data/auth_repository.dart';
 import 'package:equatable/equatable.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 part 'auth_event.dart';
 part 'auth_state.dart';
@@ -25,20 +26,25 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<LoginWithEmailEvent>((event, emit) async {
       emit(AuthLoading());
       try {
+        await authRepository.signOut();
         await authRepository.loginWithEmail(event.email, event.password);
+        await _saveProviderInfo("email/password");
         if (emit.isDone) return;
-        emit(AuthSuccess(auth.currentUser));
+        emit(AuthSuccess(auth.currentUser!));
       } catch (e) {
         if (emit.isDone) return;
         emit(AuthFailure(e.toString()));
       }
     });
+
     on<SignUpWithEmailEvent>((event, emit) async {
       emit(AuthLoading());
       try {
+        await authRepository.signOut();
         await authRepository.signUpWithEmail(event.email, event.password);
+        await _saveProviderInfo("email/password");
         if (emit.isDone) return;
-        emit(AuthSuccess(auth.currentUser));
+        emit(AuthSuccess(auth.currentUser!));
       } catch (e) {
         if (emit.isDone) return;
         emit(AuthFailure(e.toString()));
@@ -48,9 +54,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<SignInWithGoogleEvent>((event, emit) async {
       emit(AuthLoading());
       try {
+        await authRepository.signOut();
         await authRepository.signInWithGoogle();
+        await _saveProviderInfo("google");
         if (emit.isDone) return;
-        emit(AuthSuccess(auth.currentUser));
+        emit(AuthSuccess(auth.currentUser!));
       } catch (e) {
         if (emit.isDone) return;
         emit(AuthFailure(e.toString()));
@@ -59,7 +67,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     on<SendOtpEvent>((event, emit) async {
       emit(AuthLoading());
-
       try {
         await auth.verifyPhoneNumber(
           phoneNumber: event.phoneNumber,
@@ -81,11 +88,26 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(AuthFailure(e.toString()));
       }
     });
+
     on<VerifyPhoneAuthCredentialEvent>((event, emit) async {
       try {
         await auth.signInWithCredential(event.credential);
-        emit(AuthSuccess(auth.currentUser));
+        await _saveProviderInfo("phone");
+        emit(AuthSuccess(auth.currentUser!));
       } catch (e) {
+        emit(AuthFailure(e.toString()));
+      }
+    });
+
+    on<VerifyOtpEvent>((event, emit) async {
+      emit(AuthLoading());
+      try {
+        await authRepository.verifyOtp(event.verificationId, event.otp);
+        await _saveProviderInfo("phone");
+        if (emit.isDone) return;
+        emit(AuthSuccess(auth.currentUser!));
+      } catch (e) {
+        if (emit.isDone) return;
         emit(AuthFailure(e.toString()));
       }
     });
@@ -102,21 +124,23 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(OtpTimeout());
     });
 
-    on<VerifyOtpEvent>((event, emit) async {
-      emit(AuthLoading());
-      try {
-        await authRepository.verifyOtp(event.verificationId, event.otp);
-        if (emit.isDone) return;
-        emit(AuthSuccess(auth.currentUser));
-      } catch (e) {
-        if (emit.isDone) return;
-        emit(AuthFailure(e.toString()));
-      }
-    });
     on<SignOutEvent>((event, emit) async {
       await authRepository.signOut();
       if (emit.isDone) return;
       emit(AuthFailure("Logged out"));
     });
+  }
+
+  Future<void> _saveProviderInfo(String provider) async {
+    final user = auth.currentUser;
+    if (user == null) return;
+
+    await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+      'uid': user.uid,
+      'provider': provider,
+      'email': user.email,
+      'phone': user.phoneNumber,
+      'lastLogin': DateTime.now().toIso8601String(),
+    }, SetOptions(merge: true));
   }
 }

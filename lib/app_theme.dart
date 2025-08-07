@@ -1,14 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 final ThemeData lightTheme = ThemeData(
   brightness: Brightness.light,
   primarySwatch: Colors.indigo,
   scaffoldBackgroundColor: Colors.white,
-  appBarTheme: const AppBarTheme(
-    backgroundColor: Colors.indigo,
-    foregroundColor: Colors.white,
-    elevation: 2,
-  ),
   floatingActionButtonTheme: const FloatingActionButtonThemeData(
     backgroundColor: Colors.indigo,
   ),
@@ -18,6 +14,7 @@ final ThemeData lightTheme = ThemeData(
       borderSide: BorderSide(color: Colors.indigo),
     ),
   ),
+  textTheme: GoogleFonts.poppinsTextTheme(),
 );
 
 final ThemeData darkTheme = ThemeData(
@@ -36,6 +33,9 @@ final ThemeData darkTheme = ThemeData(
     focusedBorder: OutlineInputBorder(
       borderSide: BorderSide(color: Colors.deepPurple),
     ),
+  ),
+  textTheme: GoogleFonts.poppinsTextTheme(
+    ThemeData.dark().textTheme,
   ),
 );
 

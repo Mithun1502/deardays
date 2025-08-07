@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -18,16 +19,11 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
-    print("🔧 Initializing Firebase...");
     await Firebase.initializeApp();
-    print("✅ Firebase initialized");
-
-    print("🔧 Initializing SharedPrefs...");
     await SharedPrefsHelper.init();
-    print("✅ SharedPrefs initialized");
   } catch (e, st) {
-    print("❌ Initialization error: $e");
-    print("🔍 Stack trace:\n$st");
+    print("Initialization error: $e");
+    print("Stack trace:\n$st");
   }
 
   runApp(const DearDaysApp());
@@ -57,7 +53,8 @@ class DearDaysApp extends StatelessWidget {
             theme: themeState.isDarkMode ? darkTheme : lightTheme,
             initialRoute: '/',
             routes: {
-              '/': (context) => const RootPage(),
+              '/': (context) => const SplashScreen(),
+              '/root': (context) => const RootPage(),
               '/login': (context) => const LoginPage(),
               '/signup': (context) => const SignupPage(),
               '/home': (context) => const DiaryListPage(),
@@ -71,6 +68,49 @@ class DearDaysApp extends StatelessWidget {
   }
 }
 
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Timer(const Duration(seconds: 2), () {
+      Navigator.pushReplacementNamed(context, '/root');
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.lightBlue.shade50,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset('assets/images/logo.png', width: 120, height: 120),
+            const SizedBox(height: 20),
+            const Text(
+              'Dear Days',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.blueAccent,
+              ),
+            ),
+            const SizedBox(height: 10),
+            const CircularProgressIndicator(color: Colors.blueAccent),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class RootPage extends StatelessWidget {
   const RootPage({super.key});
 
@@ -78,11 +118,12 @@ class RootPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
-        print("Auth state: $state");
-
         if (state is AuthSuccess) {
           return const DiaryListPage();
         } else if (state is AuthFailure) {
+          if (state.error == "Logged out") {
+            return const SignOutPage();
+          }
           return const LoginPage();
         } else if (state is AuthLoading || state is AuthInitial) {
           return const Scaffold(
@@ -90,7 +131,7 @@ class RootPage extends StatelessWidget {
           );
         } else {
           return const Scaffold(
-            body: Center(child: Text("🔄 Checking authentication...")),
+            body: Center(child: Text("Checking authentication...")),
           );
         }
       },
