@@ -241,7 +241,7 @@ class _DiaryListPageState extends State<DiaryListPage> {
               Expanded(
                 child: _filteredEntries.isEmpty
                     ? Center(
-                        child: Text('No entries found.',
+                        child: Text('Start your Journey here..!',
                             style: TextStyle(color: textColor)),
                       )
                     : AnimationLimiter(
@@ -379,7 +379,9 @@ class _DiaryListPageState extends State<DiaryListPage> {
             );
             if (result == true) _loadEntries();
           },
-          child: Icon(Icons.add, color: isDark ? Colors.black : Colors.white),
+          child: Icon(Icons.add,
+              color:
+                  isDark ? Colors.black : const Color.fromARGB(255, 15, 0, 14)),
         ),
       ),
     );

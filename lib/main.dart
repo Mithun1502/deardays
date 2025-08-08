@@ -56,7 +56,6 @@ class DearDaysApp extends StatelessWidget {
               '/': (context) => const SplashScreen(),
               '/root': (context) => const RootPage(),
               '/login': (context) => const LoginPage(),
-              '/signup': (context) => const SignupPage(),
               '/home': (context) => const DiaryListPage(),
               '/phone-login': (context) => const PhoneLoginPage(),
               '/signout': (context) => const SignOutPage(),

@@ -13,6 +13,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final FirebaseAuth auth = FirebaseAuth.instance;
 
   AuthBloc({required this.authRepository}) : super(AuthInitial()) {
+    // App start
     on<AppStarted>((event, emit) async {
       final user = auth.currentUser;
       if (emit.isDone) return;
@@ -23,34 +24,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       }
     });
 
-    on<LoginWithEmailEvent>((event, emit) async {
-      emit(AuthLoading());
-      try {
-        await authRepository.signOut();
-        await authRepository.loginWithEmail(event.email, event.password);
-        await _saveProviderInfo("email/password");
-        if (emit.isDone) return;
-        emit(AuthSuccess(auth.currentUser!));
-      } catch (e) {
-        if (emit.isDone) return;
-        emit(AuthFailure(e.toString()));
-      }
-    });
-
-    on<SignUpWithEmailEvent>((event, emit) async {
-      emit(AuthLoading());
-      try {
-        await authRepository.signOut();
-        await authRepository.signUpWithEmail(event.email, event.password);
-        await _saveProviderInfo("email/password");
-        if (emit.isDone) return;
-        emit(AuthSuccess(auth.currentUser!));
-      } catch (e) {
-        if (emit.isDone) return;
-        emit(AuthFailure(e.toString()));
-      }
-    });
-
+    // Google Sign-in
     on<SignInWithGoogleEvent>((event, emit) async {
       emit(AuthLoading());
       try {
@@ -65,6 +39,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       }
     });
 
+    // Send OTP for phone auth
     on<SendOtpEvent>((event, emit) async {
       emit(AuthLoading());
       try {
@@ -89,6 +64,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       }
     });
 
+    // Auto-verification of phone credential
     on<VerifyPhoneAuthCredentialEvent>((event, emit) async {
       try {
         await auth.signInWithCredential(event.credential);
@@ -99,6 +75,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       }
     });
 
+    // Manual OTP verification
     on<VerifyOtpEvent>((event, emit) async {
       emit(AuthLoading());
       try {
@@ -112,6 +89,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       }
     });
 
+    // OTP Events
     on<OtpFailedEvent>((event, emit) {
       emit(AuthFailure(event.error));
     });
@@ -124,6 +102,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(OtpTimeout());
     });
 
+    // Sign out
     on<SignOutEvent>((event, emit) async {
       await authRepository.signOut();
       if (emit.isDone) return;
