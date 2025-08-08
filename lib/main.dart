@@ -14,6 +14,7 @@ import 'package:dear_days/features/diary/bloc/diary_bloc.dart';
 import 'package:dear_days/features/diary/presentation/pages/diary_list_page.dart';
 import 'package:dear_days/features/settings/theme/theme_bloc.dart';
 import 'package:dear_days/core/utils/shared_prefs_helper.dart';
+import 'app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -85,25 +86,23 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.lightBlue.shade50,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset('assets/images/logo.png', width: 120, height: 120),
-            const SizedBox(height: 20),
-            const Text(
-              'Dear Days',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.blueAccent,
-              ),
-            ),
-            const SizedBox(height: 10),
-            const CircularProgressIndicator(color: Colors.blueAccent),
-          ],
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color.fromARGB(255, 3, 60, 86), Color(0xFFE1F5FE)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: const Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(color: Color.fromARGB(255, 2, 7, 16)),
+            ],
+          ),
         ),
       ),
     );

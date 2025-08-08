@@ -100,6 +100,10 @@ class _PhoneLoginPageState extends State<PhoneLoginPage> {
                     const SizedBox(height: 64),
                     if (!otpSent)
                       TextField(
+                        style: const TextStyle(
+                          color: Color.fromARGB(255, 116, 15, 15),
+                          fontWeight: FontWeight.w700,
+                        ),
                         controller: _phoneController,
                         keyboardType: TextInputType.phone,
                         decoration: const InputDecoration(
@@ -110,7 +114,8 @@ class _PhoneLoginPageState extends State<PhoneLoginPage> {
                               fontSize: 17),
                           border: OutlineInputBorder(),
                           filled: true,
-                          fillColor: Colors.white,
+                          fillColor: Colors.transparent,
+                          focusColor: Colors.amber,
                         ),
                       ),
                     if (otpSent)
