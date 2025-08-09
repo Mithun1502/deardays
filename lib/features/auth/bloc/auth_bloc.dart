@@ -27,10 +27,17 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthLoading());
       try {
         await authRepository.signOut();
-        await authRepository.signInWithGoogle();
+        final userCredential = await authRepository.signInWithGoogle();
+
+        if (userCredential == null) {
+          emit(AuthFailure("Google sign-in cancelled"));
+          return;
+        }
+
         await _saveProviderInfo("google");
+
         if (emit.isDone) return;
-        emit(AuthSuccess(auth.currentUser!));
+        emit(AuthSuccess(userCredential.user!));
       } catch (e) {
         if (emit.isDone) return;
         emit(AuthFailure(e.toString()));
@@ -98,9 +105,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     on<SignOutEvent>((event, emit) async {
       await authRepository.signOut();
-      final googleSignIn = GoogleSignIn();
-      await googleSignIn.signOut();
-      await googleSignIn.disconnect();
       if (emit.isDone) return;
       emit(AuthFailure("Logged out"));
     });
