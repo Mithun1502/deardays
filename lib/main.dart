@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:dear_days/features/diary/presentation/pages/splash_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -68,20 +70,24 @@ class DearDaysApp extends StatelessWidget {
   }
 }
 
-class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
-
-  @override
-  State<SplashScreen> createState() => _SplashScreenState();
-}
-
 class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    Timer(const Duration(seconds: 2), () {
+    _checkLoginStatus();
+  }
+
+  void _checkLoginStatus() async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user != null) {
+      // Already logged in → no delay
+      Navigator.pushReplacementNamed(context, '/home');
+    } else {
+      // Not logged in → short splash, then go to login/root
+      await Future.delayed(const Duration(seconds: 2));
       Navigator.pushReplacementNamed(context, '/root');
-    });
+    }
   }
 
   @override
@@ -97,12 +103,8 @@ class _SplashScreenState extends State<SplashScreen> {
       child: const Scaffold(
         backgroundColor: Colors.transparent,
         body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
+          child:
               CircularProgressIndicator(color: Color.fromARGB(255, 2, 7, 16)),
-            ],
-          ),
         ),
       ),
     );

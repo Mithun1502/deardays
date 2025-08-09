@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dear_days/features/auth/bloc/auth_bloc.dart';
-import 'package:dear_days/app_theme.dart';
+//import 'package:dear_days/app_theme.dart';
 
 class PhoneLoginPage extends StatefulWidget {
   const PhoneLoginPage({super.key});
@@ -89,19 +89,11 @@ class _PhoneLoginPageState extends State<PhoneLoginPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Text(
-                      'Phone Login',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                          color: Color.fromARGB(255, 1, 11, 20),
-                          fontWeight: FontWeight.bold,
-                          fontSize: 26),
-                    ),
                     const SizedBox(height: 64),
                     if (!otpSent)
                       TextField(
                         style: const TextStyle(
-                          color: Color.fromARGB(255, 116, 15, 15),
+                          color: Color.fromARGB(255, 7, 13, 88),
                           fontWeight: FontWeight.w700,
                         ),
                         controller: _phoneController,
@@ -149,7 +141,7 @@ class _PhoneLoginPageState extends State<PhoneLoginPage> {
                         child: const Text(
                           'Send OTP',
                           style: TextStyle(
-                              color: Color.fromARGB(255, 253, 254, 255),
+                              color: Color.fromARGB(255, 19, 52, 84),
                               fontWeight: FontWeight.bold,
                               fontSize: 17),
                         ),

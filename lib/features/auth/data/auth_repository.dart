@@ -4,36 +4,31 @@ import 'package:google_sign_in/google_sign_in.dart';
 class AuthRepository {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
 
-  // ✅ Login with email
   Future<UserCredential> loginWithEmail(String email, String password) async {
-    await _firebaseAuth.signOut(); // ❗Important to avoid merging
+    await _firebaseAuth.signOut();
     return await _firebaseAuth.signInWithEmailAndPassword(
         email: email, password: password);
   }
 
-  // ✅ Signup with email
   Future<UserCredential> signUpWithEmail(String email, String password) async {
     await _firebaseAuth.signOut();
     return await _firebaseAuth.createUserWithEmailAndPassword(
         email: email, password: password);
   }
 
-  // ✅ Sign in with Google
-  Future<UserCredential> signInWithGoogle() async {
+  Future<UserCredential?> signInWithGoogle() async {
     await _firebaseAuth.signOut();
     final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+    if (googleUser == null) return null;
     final GoogleSignInAuthentication googleAuth =
-        await googleUser!.authentication;
-
+        await googleUser.authentication;
     final credential = GoogleAuthProvider.credential(
       accessToken: googleAuth.accessToken,
       idToken: googleAuth.idToken,
     );
-
     return await _firebaseAuth.signInWithCredential(credential);
   }
 
-  // ✅ Send OTP for phone login
   Future<void> sendOtp({
     required String phoneNumber,
     required Function(String) codeSent,
@@ -51,7 +46,6 @@ class AuthRepository {
     );
   }
 
-  // ✅ Verify OTP and login
   Future<UserCredential> verifyOtp(String verificationId, String otp) async {
     await _firebaseAuth.signOut();
     final credential = PhoneAuthProvider.credential(
@@ -59,28 +53,31 @@ class AuthRepository {
     return await _firebaseAuth.signInWithCredential(credential);
   }
 
-  // ✅ Sign out
   Future<void> signOut() async {
-    await _firebaseAuth.signOut();
-    await GoogleSignIn().signOut();
+    try {
+      await _firebaseAuth.signOut();
+    } catch (_) {}
+    final googleSignIn = GoogleSignIn();
+    try {
+      if (await googleSignIn.isSignedIn()) {
+        await googleSignIn.signOut();
+        await googleSignIn.disconnect();
+      }
+    } catch (_) {}
   }
 
-  // ✅ Get current login provider
   String? getLoginProvider() {
     final user = _firebaseAuth.currentUser;
     if (user != null && user.providerData.isNotEmpty) {
-      return user.providerData.first
-          .providerId; // eg: 'google.com', 'password', 'phone'
+      return user.providerData.first.providerId;
     }
     return null;
   }
 
-  // ✅ Get current UID (optional)
   String? getCurrentUserId() {
     return _firebaseAuth.currentUser?.uid;
   }
 
-  // ✅ Check if user is logged in
   bool isLoggedIn() {
     return _firebaseAuth.currentUser != null;
   }
