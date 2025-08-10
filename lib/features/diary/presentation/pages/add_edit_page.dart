@@ -49,6 +49,7 @@ class _AddEditPageState extends State<AddEditPage> {
         dateTime: DateTime.now().toIso8601String(),
         mood: _mood,
         mediaPaths: _mediaPaths,
+        userId: '',
       );
 
       if (widget.entry == null) {
@@ -63,7 +64,7 @@ class _AddEditPageState extends State<AddEditPage> {
 
   Future<void> _pickMedia() async {
     final picked = await _picker.pickMultiImage();
-    if (picked.isNotEmpty) {
+    if (picked != null && picked.isNotEmpty) {
       setState(() {
         _mediaPaths.addAll(picked.map((e) => e.path));
       });

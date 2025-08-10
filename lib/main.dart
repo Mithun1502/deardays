@@ -46,7 +46,7 @@ class DearDaysApp extends StatelessWidget {
               AuthBloc(authRepository: authRepository)..add(AppStarted()),
         ),
         BlocProvider(create: (_) => ThemeBloc()..add(LoadThemeEvent())),
-        BlocProvider(create: (_) => DiaryBloc()),
+        BlocProvider(create: (_) => DiaryBloc(userId: '')),
       ],
       child: BlocBuilder<ThemeBloc, ThemeState>(
         builder: (context, themeState) {
@@ -81,10 +81,8 @@ class _SplashScreenState extends State<SplashScreen> {
     final user = FirebaseAuth.instance.currentUser;
 
     if (user != null) {
-      // Already logged in → no delay
       Navigator.pushReplacementNamed(context, '/home');
     } else {
-      // Not logged in → short splash, then go to login/root
       await Future.delayed(const Duration(seconds: 2));
       Navigator.pushReplacementNamed(context, '/root');
     }

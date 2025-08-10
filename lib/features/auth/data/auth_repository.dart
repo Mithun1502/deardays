@@ -26,9 +26,20 @@ class AuthRepository {
   Future<UserCredential?> signInWithGoogle() async {
     await _clearSessions();
 
-    // Force account picker by signing out Google completely before sign-in
-    final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-    if (googleUser == null) return null; // User cancelled
+    // Force sign-out + disconnect before choosing account
+    try {
+      await _googleSignIn.signOut();
+      await _googleSignIn.disconnect();
+    } catch (_) {}
+
+    // Create fresh instance for forcing account picker
+    final GoogleSignIn freshGoogleSignIn = GoogleSignIn(
+      scopes: ['email'],
+      forceCodeForRefreshToken: true,
+    );
+
+    final GoogleSignInAccount? googleUser = await freshGoogleSignIn.signIn();
+    if (googleUser == null) return null;
 
     final GoogleSignInAuthentication googleAuth =
         await googleUser.authentication;

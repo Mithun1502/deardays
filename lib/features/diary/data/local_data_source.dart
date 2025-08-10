@@ -21,24 +21,28 @@ class LocalDataSource {
 
     return await openDatabase(
       path,
-      version: 2, // 🔼 Version updated from 1 to 2
+      version: 3,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE diary_entries (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            userId TEXT NOT NULL,
             title TEXT NOT NULL,
             content TEXT NOT NULL,
             dateTime TEXT NOT NULL,
             mood TEXT,
-            mediaPaths TEXT -- ✅ New column added
+            mediaPaths TEXT
           )
         ''');
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
-          // 🔧 Add column for existing users
           await db
               .execute('ALTER TABLE diary_entries ADD COLUMN mediaPaths TEXT');
+        }
+        if (oldVersion < 3) {
+          await db.execute(
+              'ALTER TABLE diary_entries ADD COLUMN userId TEXT NOT NULL DEFAULT ""');
         }
       },
     );
@@ -53,22 +57,25 @@ class LocalDataSource {
     );
   }
 
-  Future<List<DiaryModel>> getAllEntries() async {
+  Future<List<DiaryModel>> getAllEntries({required String userId}) async {
     final db = await database;
     final result = await db.query(
       'diary_entries',
+      where: 'userId = ?',
+      whereArgs: [userId],
       orderBy: 'dateTime DESC',
     );
     return result.map((map) => DiaryModel.fromMap(map)).toList();
   }
 
   Future<List<DiaryModel>> getFilteredEntries({
+    required String userId,
     String? dateTime,
     String? mood,
   }) async {
     final db = await database;
-    final whereClauses = <String>[];
-    final whereArgs = <dynamic>[];
+    final whereClauses = <String>['userId = ?'];
+    final whereArgs = <dynamic>[userId];
 
     if (dateTime != null && dateTime.isNotEmpty) {
       whereClauses.add("dateTime LIKE ?");
@@ -82,8 +89,8 @@ class LocalDataSource {
 
     final result = await db.query(
       'diary_entries',
-      where: whereClauses.isEmpty ? null : whereClauses.join(' AND '),
-      whereArgs: whereArgs.isEmpty ? null : whereArgs,
+      where: whereClauses.join(' AND '),
+      whereArgs: whereArgs,
       orderBy: 'dateTime DESC',
     );
 

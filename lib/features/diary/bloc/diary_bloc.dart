@@ -8,8 +8,9 @@ part 'diary_state.dart';
 
 class DiaryBloc extends Bloc<DiaryEvent, DiaryState> {
   final LocalDataSource _dataSource = LocalDataSource();
+  final String userId;
 
-  DiaryBloc() : super(DiaryLoading()) {
+  DiaryBloc({required this.userId}) : super(DiaryLoading()) {
     on<LoadEntriesEvent>(_onLoadEntries);
     on<AddEntryEvent>(_onAddEntry);
     on<UpdateEntryEvent>(_onUpdateEntry);
@@ -20,7 +21,7 @@ class DiaryBloc extends Bloc<DiaryEvent, DiaryState> {
   Future<void> _onLoadEntries(
       LoadEntriesEvent event, Emitter<DiaryState> emit) async {
     emit(DiaryLoading());
-    final entries = await _dataSource.getAllEntries();
+    final entries = await _dataSource.getAllEntries(userId: userId);
     emit(DiaryLoaded(entries));
   }
 
@@ -45,7 +46,7 @@ class DiaryBloc extends Bloc<DiaryEvent, DiaryState> {
   Future<void> _onFilterEntries(
       FilterEntriesEvent event, Emitter<DiaryState> emit) async {
     emit(DiaryLoading());
-    final allEntries = await _dataSource.getAllEntries();
+    final allEntries = await _dataSource.getAllEntries(userId: userId);
 
     List<DiaryModel> filtered = allEntries;
 

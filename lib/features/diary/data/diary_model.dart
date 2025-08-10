@@ -1,5 +1,6 @@
 class DiaryModel {
   final int? id;
+  final String userId;
   final String title;
   final String content;
   final String dateTime;
@@ -8,6 +9,7 @@ class DiaryModel {
 
   DiaryModel({
     this.id,
+    required this.userId,
     required this.title,
     required this.content,
     required this.dateTime,
@@ -18,6 +20,7 @@ class DiaryModel {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
+      'userId': userId,
       'title': title,
       'content': content,
       'dateTime': dateTime,
@@ -29,6 +32,7 @@ class DiaryModel {
   factory DiaryModel.fromMap(Map<String, dynamic> map) {
     return DiaryModel(
       id: map['id'],
+      userId: map['userId'],
       title: map['title'],
       content: map['content'],
       dateTime: map['dateTime'],

@@ -34,7 +34,7 @@ class _CalendarPageState extends State<CalendarPage> {
 
   Future<void> _loadEvents() async {
     final localData = LocalDataSource();
-    final entries = await localData.getAllEntries();
+    final entries = await localData.getAllEntries(userId: '');
 
     for (var entry in entries) {
       DateTime date = DateTime.parse(entry.dateTime);

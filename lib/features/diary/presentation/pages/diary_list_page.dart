@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:dear_days/features/diary/data/local_data_source.dart';
 import 'package:dear_days/features/diary/data/diary_model.dart';
 import 'package:dear_days/features/diary/presentation/pages/add_edit_page.dart';
@@ -21,6 +20,7 @@ class DiaryListPage extends StatefulWidget {
 
 class _DiaryListPageState extends State<DiaryListPage> {
   final LocalDataSource _dataSource = LocalDataSource();
+
   List<DiaryModel> _entries = [];
   List<DiaryModel> _filteredEntries = [];
 
@@ -35,7 +35,7 @@ class _DiaryListPageState extends State<DiaryListPage> {
   }
 
   Future<void> _loadEntries() async {
-    final entries = await _dataSource.getAllEntries();
+    final entries = await _dataSource.getAllEntries(userId: '');
     setState(() {
       _entries = entries;
       _applyFilters();
@@ -49,13 +49,11 @@ class _DiaryListPageState extends State<DiaryListPage> {
                 .toLowerCase()
                 .contains(_searchQuery.toLowerCase()) ||
             entry.content.toLowerCase().contains(_searchQuery.toLowerCase());
-
         final matchesMood =
             _selectedMood == null || entry.mood == _selectedMood;
         final matchesDate = _selectedDate == null ||
             DateFormat('yyyy-MM-dd').format(DateTime.parse(entry.dateTime)) ==
                 DateFormat('yyyy-MM-dd').format(_selectedDate!);
-
         return matchesSearch && matchesMood && matchesDate;
       }).toList();
     });
@@ -68,7 +66,6 @@ class _DiaryListPageState extends State<DiaryListPage> {
       firstDate: DateTime(2000),
       lastDate: DateTime.now(),
     );
-
     if (pickedDate != null) {
       setState(() {
         _selectedDate = pickedDate;
@@ -88,7 +85,10 @@ class _DiaryListPageState extends State<DiaryListPage> {
 
   void _deleteEntry(int id) async {
     await _dataSource.deleteEntry(id);
-    _loadEntries();
+    setState(() {
+      _entries.removeWhere((e) => e.id == id);
+      _filteredEntries.removeWhere((e) => e.id == id);
+    });
   }
 
   @override
@@ -97,10 +97,14 @@ class _DiaryListPageState extends State<DiaryListPage> {
     final textColor = isDark ? Colors.white : Colors.black87;
     final gradient = isDark ? darkGradient : lightGradient;
 
+    final authState = context.watch<AuthBloc>().state;
+    String? userEmail;
+    if (authState is AuthSuccess) {
+      userEmail = authState.user?.email;
+    }
+
     return Container(
-      decoration: BoxDecoration(
-        gradient: gradient,
-      ),
+      decoration: BoxDecoration(gradient: gradient),
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(
@@ -115,42 +119,62 @@ class _DiaryListPageState extends State<DiaryListPage> {
             ),
           ),
           iconTheme: IconThemeData(color: textColor),
+          centerTitle: true,
           actions: [
             IconButton(
-              icon: Icon(
-                isDark ? Icons.wb_sunny : Icons.nightlight_round,
-                color: isDark
-                    ? const Color.fromARGB(255, 244, 244, 244)
-                    : const Color.fromARGB(255, 0, 16, 45),
-              ),
-              onPressed: () =>
-                  context.read<ThemeBloc>().add(ToggleThemeEvent()),
-              tooltip: 'Toggle Dark Mode',
+              icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode,
+                  color: textColor),
+              onPressed: () {
+                context.read<ThemeBloc>().add(ToggleThemeEvent());
+              },
             ),
-            PopupMenuButton<String>(
-              icon: Icon(Icons.more_vert, color: textColor),
-              onSelected: (value) {
-                if (value == 'logout') {
+          ],
+        ),
+        drawer: Drawer(
+          backgroundColor: isDark
+              ? const Color.fromARGB(255, 0, 0, 0).withOpacity(0.3)
+              : const Color.fromARGB(255, 116, 180, 209).withOpacity(0.3),
+          child: Column(
+            children: [
+              UserAccountsDrawerHeader(
+                accountName: const Text(''),
+                accountEmail: Text(
+                  userEmail ?? 'No Email',
+                  style: TextStyle(
+                      color: textColor,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600),
+                ),
+                currentAccountPicture: const CircleAvatar(
+                  child: Icon(Icons.person, size: 40),
+                ),
+                decoration: BoxDecoration(gradient: gradient),
+              ),
+              ListTile(
+                leading: Icon(
+                  Icons.logout,
+                  color: isDark
+                      ? Colors.white
+                      : const Color.fromARGB(221, 190, 191, 195),
+                ),
+                title: Text(
+                  'Sign Out',
+                  style: TextStyle(
+                    color: isDark
+                        ? Colors.white
+                        : const Color.fromARGB(221, 190, 191, 195),
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                onTap: () {
                   context.read<AuthBloc>().add(SignOutEvent());
                   Navigator.pushNamedAndRemoveUntil(
                       context, '/login', (route) => false);
-                }
-              },
-              itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                const PopupMenuItem<String>(
-                  value: 'logout',
-                  child: Row(
-                    children: [
-                      Icon(Icons.logout, color: Colors.black54),
-                      SizedBox(width: 10),
-                      Text('Sign Out'),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ],
-          centerTitle: true,
+                },
+              ),
+            ],
+          ),
         ),
         body: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -177,8 +201,7 @@ class _DiaryListPageState extends State<DiaryListPage> {
                   fillColor:
                       isDark ? Colors.black54 : Colors.white.withOpacity(0.9),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                      borderRadius: BorderRadius.circular(12)),
                 ),
                 onChanged: (value) {
                   setState(() {
@@ -241,8 +264,10 @@ class _DiaryListPageState extends State<DiaryListPage> {
               Expanded(
                 child: _filteredEntries.isEmpty
                     ? Center(
-                        child: Text('Start your Journey here..!',
-                            style: TextStyle(color: textColor)),
+                        child: Text(
+                          'Start your Journey here..!',
+                          style: TextStyle(color: textColor),
+                        ),
                       )
                     : AnimationLimiter(
                         child: ListView.builder(
@@ -269,15 +294,13 @@ class _DiaryListPageState extends State<DiaryListPage> {
                                         'Are you sure you want to delete this diary entry?'),
                                     actions: [
                                       TextButton(
-                                        onPressed: () =>
-                                            Navigator.of(context).pop(false),
-                                        child: const Text('Cancel'),
-                                      ),
+                                          onPressed: () =>
+                                              Navigator.of(context).pop(false),
+                                          child: const Text('Cancel')),
                                       TextButton(
-                                        onPressed: () =>
-                                            Navigator.of(context).pop(true),
-                                        child: const Text('Delete'),
-                                      ),
+                                          onPressed: () =>
+                                              Navigator.of(context).pop(true),
+                                          child: const Text('Delete')),
                                     ],
                                   ),
                                 );
@@ -304,56 +327,50 @@ class _DiaryListPageState extends State<DiaryListPage> {
                                                   await Navigator.push(
                                                 context,
                                                 MaterialPageRoute(
-                                                  builder: (_) =>
-                                                      AddEditPage(entry: entry),
-                                                ),
+                                                    builder: (_) => AddEditPage(
+                                                        entry: entry)),
                                               );
-                                              if (result == true)
+                                              if (result == true) {
                                                 _loadEntries();
+                                              }
                                             },
                                           ),
-                                          if (entry.mediaPaths != null &&
-                                              entry.mediaPaths!.isNotEmpty)
+                                          if (entry.mediaPaths.isNotEmpty)
                                             SizedBox(
                                               height: 100,
                                               child: ListView(
                                                 scrollDirection:
                                                     Axis.horizontal,
-                                                children: entry.mediaPaths!
-                                                    .map((path) => Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .only(
-                                                                  right: 8.0,
-                                                                  top: 8),
-                                                          child: ClipRRect(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        8),
-                                                            child: Image.file(
-                                                              File(path),
-                                                              width: 100,
-                                                              height: 100,
-                                                              fit: BoxFit.cover,
-                                                              errorBuilder:
-                                                                  (context,
-                                                                          error,
-                                                                          stackTrace) =>
-                                                                      Container(
-                                                                width: 100,
-                                                                height: 100,
-                                                                color: Colors
-                                                                    .grey
-                                                                    .shade300,
-                                                                child: const Icon(
-                                                                    Icons
-                                                                        .broken_image),
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        ))
-                                                    .toList(),
+                                                children: entry.mediaPaths
+                                                    .map((path) {
+                                                  return Padding(
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                            right: 8.0, top: 8),
+                                                    child: ClipRRect(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              8),
+                                                      child: Image.file(
+                                                        File(path),
+                                                        width: 100,
+                                                        height: 100,
+                                                        fit: BoxFit.cover,
+                                                        errorBuilder: (context,
+                                                                error,
+                                                                stackTrace) =>
+                                                            Container(
+                                                          width: 100,
+                                                          height: 100,
+                                                          color: Colors
+                                                              .grey.shade300,
+                                                          child: const Icon(Icons
+                                                              .broken_image),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  );
+                                                }).toList(),
                                               ),
                                             ),
                                         ],
@@ -379,9 +396,10 @@ class _DiaryListPageState extends State<DiaryListPage> {
             );
             if (result == true) _loadEntries();
           },
-          child: Icon(Icons.add,
-              color:
-                  isDark ? Colors.black : const Color.fromARGB(255, 15, 0, 14)),
+          child: Icon(
+            Icons.add,
+            color: isDark ? Colors.black : const Color.fromARGB(255, 15, 0, 14),
+          ),
         ),
       ),
     );

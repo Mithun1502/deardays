@@ -2,7 +2,6 @@ import 'package:bloc/bloc.dart';
 import 'package:dear_days/features/auth/data/auth_repository.dart';
 import 'package:equatable/equatable.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 part 'auth_event.dart';
@@ -14,8 +13,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   AuthBloc({required this.authRepository}) : super(AuthInitial()) {
     on<AppStarted>((event, emit) async {
+      emit(AuthLoading());
       final user = auth.currentUser;
-      if (emit.isDone) return;
       if (user != null) {
         emit(AuthSuccess(user));
       } else {
@@ -26,7 +25,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<SignInWithGoogleEvent>((event, emit) async {
       emit(AuthLoading());
       try {
-        await authRepository.signOut();
         final userCredential = await authRepository.signInWithGoogle();
 
         if (userCredential == null) {
@@ -35,11 +33,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         }
 
         await _saveProviderInfo("google");
-
-        if (emit.isDone) return;
         emit(AuthSuccess(userCredential.user!));
       } catch (e) {
-        if (emit.isDone) return;
         emit(AuthFailure(e.toString()));
       }
     });
@@ -83,10 +78,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       try {
         await authRepository.verifyOtp(event.verificationId, event.otp);
         await _saveProviderInfo("phone");
-        if (emit.isDone) return;
         emit(AuthSuccess(auth.currentUser!));
       } catch (e) {
-        if (emit.isDone) return;
         emit(AuthFailure(e.toString()));
       }
     });
@@ -105,8 +98,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     on<SignOutEvent>((event, emit) async {
       await authRepository.signOut();
-      if (emit.isDone) return;
-      emit(AuthFailure("Logged out"));
+      // Clear user data completely
+      emit(AuthInitial());
     });
   }
 
