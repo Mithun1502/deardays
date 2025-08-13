@@ -65,7 +65,34 @@ class _DiaryListPageState extends State<DiaryListPage> {
       initialDate: _selectedDate ?? DateTime.now(),
       firstDate: DateTime(2000),
       lastDate: DateTime.now(),
+      builder: (context, child) {
+        final theme = Theme.of(context);
+        final isDark = theme.brightness == Brightness.dark;
+
+        return Theme(
+          data: theme.copyWith(
+            colorScheme: isDark
+                ? ColorScheme.dark(
+                    primary: Colors.white,
+                    onPrimary: Colors.white,
+                    surface:
+                        darkTheme.scaffoldBackgroundColor.withOpacity(0.95),
+                    onSurface: Colors.white,
+                  )
+                : ColorScheme.light(
+                    primary: Colors.black,
+                    onPrimary: Colors.white,
+                    surface:
+                        lightTheme.scaffoldBackgroundColor.withOpacity(0.95),
+                    onSurface: Colors.black87,
+                  ),
+            dialogBackgroundColor: Colors.transparent,
+          ),
+          child: child!,
+        );
+      },
     );
+
     if (pickedDate != null) {
       setState(() {
         _selectedDate = pickedDate;
@@ -322,17 +349,202 @@ class _DiaryListPageState extends State<DiaryListPage> {
                                         children: [
                                           DiaryCard(
                                             entry: entry,
-                                            onTap: () async {
-                                              final result =
-                                                  await Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                    builder: (_) => AddEditPage(
-                                                        entry: entry)),
+                                            onTap: () {
+                                              showDialog(
+                                                context: context,
+                                                builder: (_) {
+                                                  return Dialog(
+                                                    backgroundColor:
+                                                        Colors.transparent,
+                                                    shape:
+                                                        RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              16),
+                                                    ),
+                                                    child: Container(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              16),
+                                                      constraints:
+                                                          const BoxConstraints(
+                                                              maxHeight: 500),
+                                                      decoration: BoxDecoration(
+                                                        gradient: gradient,
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(
+                                                          16,
+                                                        ),
+                                                        boxShadow: [
+                                                          BoxShadow(
+                                                            color: Colors.black
+                                                                .withOpacity(
+                                                                    0.69),
+                                                            blurRadius: 10,
+                                                            spreadRadius: 5,
+                                                            offset:
+                                                                const Offset(
+                                                                    4, 4),
+                                                          ),
+                                                        ],
+                                                        border: Border.all(
+                                                          color: Colors.white
+                                                              .withOpacity(
+                                                                  0.05),
+                                                        ),
+                                                      ),
+                                                      child:
+                                                          SingleChildScrollView(
+                                                        child: Column(
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment
+                                                                  .start,
+                                                          children: [
+                                                            Row(
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .spaceBetween,
+                                                              children: [
+                                                                Expanded(
+                                                                  child: Text(
+                                                                    entry.title,
+                                                                    style:
+                                                                        TextStyle(
+                                                                      fontSize:
+                                                                          22,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .bold,
+                                                                      color:
+                                                                          textColor,
+                                                                    ),
+                                                                    overflow:
+                                                                        TextOverflow
+                                                                            .ellipsis,
+                                                                  ),
+                                                                ),
+                                                                IconButton(
+                                                                  icon: Icon(
+                                                                      Icons
+                                                                          .close,
+                                                                      color:
+                                                                          textColor),
+                                                                  onPressed: () =>
+                                                                      Navigator.pop(
+                                                                          context),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                            const SizedBox(
+                                                                height: 8),
+                                                            Text(
+                                                              "${DateFormat('yyyy-MM-dd').format(DateTime.parse(entry.dateTime))}  ${entry.mood ?? ''}",
+                                                              style: TextStyle(
+                                                                  color: textColor
+                                                                      .withOpacity(
+                                                                          0.7)),
+                                                            ),
+                                                            const SizedBox(
+                                                                height: 16),
+                                                            Text(
+                                                              entry.content,
+                                                              style: TextStyle(
+                                                                  fontSize: 16,
+                                                                  color:
+                                                                      textColor),
+                                                            ),
+                                                            if (entry.mediaPaths
+                                                                .isNotEmpty) ...[
+                                                              const SizedBox(
+                                                                  height: 16),
+                                                              SizedBox(
+                                                                height: 100,
+                                                                child: ListView(
+                                                                  scrollDirection:
+                                                                      Axis.horizontal,
+                                                                  children: entry
+                                                                      .mediaPaths
+                                                                      .map(
+                                                                          (path) {
+                                                                    return Padding(
+                                                                      padding: const EdgeInsets
+                                                                          .only(
+                                                                          right:
+                                                                              8.0),
+                                                                      child:
+                                                                          ClipRRect(
+                                                                        borderRadius:
+                                                                            BorderRadius.circular(8),
+                                                                        child: Image
+                                                                            .file(
+                                                                          File(
+                                                                              path),
+                                                                          width:
+                                                                              100,
+                                                                          height:
+                                                                              100,
+                                                                          fit: BoxFit
+                                                                              .cover,
+                                                                        ),
+                                                                      ),
+                                                                    );
+                                                                  }).toList(),
+                                                                ),
+                                                              ),
+                                                            ],
+                                                            const SizedBox(
+                                                                height: 20),
+                                                            Align(
+                                                              alignment: Alignment
+                                                                  .centerRight,
+                                                              child:
+                                                                  ElevatedButton
+                                                                      .icon(
+                                                                icon: Icon(
+                                                                    Icons.edit,
+                                                                    color: isDark
+                                                                        ? Colors
+                                                                            .grey
+                                                                        : Colors
+                                                                            .black),
+                                                                label: Text(
+                                                                  "Edit",
+                                                                  style: TextStyle(
+                                                                      color: isDark
+                                                                          ? Colors
+                                                                              .grey
+                                                                          : Colors
+                                                                              .black),
+                                                                ),
+                                                                onPressed:
+                                                                    () async {
+                                                                  Navigator.pop(
+                                                                      context);
+                                                                  final result =
+                                                                      await Navigator
+                                                                          .push(
+                                                                    context,
+                                                                    MaterialPageRoute(
+                                                                      builder: (_) =>
+                                                                          AddEditPage(
+                                                                              entry: entry),
+                                                                    ),
+                                                                  );
+                                                                  if (result ==
+                                                                      true) {
+                                                                    _loadEntries();
+                                                                  }
+                                                                },
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  );
+                                                },
                                               );
-                                              if (result == true) {
-                                                _loadEntries();
-                                              }
                                             },
                                           ),
                                           if (entry.mediaPaths.isNotEmpty)

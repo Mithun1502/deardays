@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:dear_days/features/auth/data/auth_repository.dart';
 import 'package:equatable/equatable.dart';
@@ -11,76 +12,89 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository authRepository;
   final FirebaseAuth auth = FirebaseAuth.instance;
 
-  AuthBloc({required this.authRepository}) : super(AuthInitial()) {
+  StreamSubscription<User?>? _authSub;
+
+  AuthBloc({required this.authRepository}) : super(const AuthInitial()) {
     on<AppStarted>((event, emit) async {
-      emit(AuthLoading());
-      final user = auth.currentUser;
-      if (user != null) {
-        emit(AuthSuccess(user));
+      emit(const AuthLoading());
+      await _authSub?.cancel();
+      _authSub = auth.authStateChanges().listen((user) async {
+        if (user == null) {
+          add(_AuthUserChanged(null));
+        } else {
+          await _saveProviderInfo(_detectPrimaryProvider(user));
+          add(_AuthUserChanged(user));
+        }
+      });
+    });
+
+    on<_AuthUserChanged>((event, emit) {
+      final user = event.user;
+      if (user == null) {
+        emit(const AuthUnauthenticated());
       } else {
-        emit(AuthFailure("No user logged in"));
+        emit(AuthSuccess(user));
       }
     });
 
     on<SignInWithGoogleEvent>((event, emit) async {
-      emit(AuthLoading());
+      emit(const AuthLoading());
       try {
         final userCredential = await authRepository.signInWithGoogle();
-
-        if (userCredential == null) {
-          emit(AuthFailure("Google sign-in cancelled"));
+        if (userCredential == null || userCredential.user == null) {
+          emit(const AuthFailure("Google sign-in cancelled"));
           return;
         }
-
         await _saveProviderInfo("google");
         emit(AuthSuccess(userCredential.user!));
       } catch (e) {
-        emit(AuthFailure(e.toString()));
+        emit(AuthFailure(_prettyFirebaseError(e)));
       }
     });
 
     on<SendOtpEvent>((event, emit) async {
-      emit(AuthLoading());
+      emit(const AuthLoading());
       try {
         await auth.verifyPhoneNumber(
           phoneNumber: event.phoneNumber,
           timeout: const Duration(seconds: 60),
-          verificationCompleted: (PhoneAuthCredential credential) {
+          verificationCompleted: (PhoneAuthCredential credential) async {
             add(VerifyPhoneAuthCredentialEvent(credential));
           },
           verificationFailed: (FirebaseAuthException e) {
-            add(OtpFailedEvent(e.message ?? "OTP verification failed"));
+            add(OtpFailedEvent(_prettyFirebaseError(e)));
           },
           codeSent: (String verificationId, int? resendToken) {
             add(OtpCodeSentEvent(verificationId));
           },
           codeAutoRetrievalTimeout: (String verificationId) {
-            add(OtpTimeoutEvent());
+            add(const OtpTimeoutEvent());
           },
         );
       } catch (e) {
-        emit(AuthFailure(e.toString()));
+        emit(AuthFailure(_prettyFirebaseError(e)));
       }
     });
 
     on<VerifyPhoneAuthCredentialEvent>((event, emit) async {
+      emit(const AuthLoading());
       try {
         await auth.signInWithCredential(event.credential);
         await _saveProviderInfo("phone");
         emit(AuthSuccess(auth.currentUser!));
       } catch (e) {
-        emit(AuthFailure(e.toString()));
+        emit(AuthFailure(_prettyFirebaseError(e)));
       }
     });
 
     on<VerifyOtpEvent>((event, emit) async {
-      emit(AuthLoading());
+      emit(const OtpVerifying());
       try {
         await authRepository.verifyOtp(event.verificationId, event.otp);
         await _saveProviderInfo("phone");
         emit(AuthSuccess(auth.currentUser!));
       } catch (e) {
-        emit(AuthFailure(e.toString()));
+        emit(AuthFailure(_prettyFirebaseError(e)));
       }
     });
 
@@ -93,25 +107,76 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     });
 
     on<OtpTimeoutEvent>((event, emit) {
-      emit(OtpTimeout());
+      emit(const OtpTimeout());
     });
 
     on<SignOutEvent>((event, emit) async {
-      await authRepository.signOut();
-      // Clear user data completely
-      emit(AuthInitial());
+      emit(const AuthLoading());
+      try {
+        await authRepository.signOut();
+        emit(const AuthUnauthenticated());
+      } catch (e) {
+        emit(AuthFailure(_prettyFirebaseError(e)));
+      }
     });
+  }
+
+  String _detectPrimaryProvider(User user) {
+    if (user.providerData.isEmpty) return "unknown";
+    return user.providerData.first.providerId;
   }
 
   Future<void> _saveProviderInfo(String provider) async {
     final user = auth.currentUser;
     if (user == null) return;
-    await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+
+    final users = FirebaseFirestore.instance.collection('users').doc(user.uid);
+    final nowIso = DateTime.now().toIso8601String();
+
+    await users.set({
       'uid': user.uid,
-      'provider': provider,
       'email': user.email,
       'phone': user.phoneNumber,
-      'lastLogin': DateTime.now().toIso8601String(),
+      'displayName': user.displayName,
+      'photoURL': user.photoURL,
+      'lastLogin': nowIso,
+      'providers': FieldValue.arrayUnion([provider]),
+      'provider': provider,
+      'createdAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
   }
+
+  String _prettyFirebaseError(Object e) {
+    if (e is FirebaseAuthException) {
+      switch (e.code) {
+        case 'user-disabled':
+          return 'Your account is disabled. Contact support.';
+        case 'network-request-failed':
+          return 'Network issue. Please check your connection.';
+        case 'invalid-verification-code':
+          return 'Invalid OTP. Please try again.';
+        case 'too-many-requests':
+          return 'Too many attempts. Please wait and try later.';
+        case 'session-expired':
+          return 'OTP session expired. Request a new code.';
+      }
+      return e.message ?? 'Authentication failed. Please try again.';
+    }
+    return e.toString();
+  }
+
+  @override
+  Future<void> close() {
+    _authSub?.cancel();
+    return super.close();
+  }
+}
+
+// Private event used internally in Bloc
+class _AuthUserChanged extends AuthEvent {
+  final User? user;
+  const _AuthUserChanged(this.user);
+
+  @override
+  List<Object?> get props => [user?.uid];
 }

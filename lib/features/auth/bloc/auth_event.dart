@@ -1,38 +1,21 @@
 part of 'auth_bloc.dart';
 
 abstract class AuthEvent extends Equatable {
+  const AuthEvent();
+
   @override
   List<Object?> get props => [];
 }
 
 class AppStarted extends AuthEvent {}
 
-class LoginWithEmailEvent extends AuthEvent {
-  final String email;
-  final String password;
-
-  LoginWithEmailEvent(this.email, this.password);
-
-  @override
-  List<Object?> get props => [email, password];
+class SignInWithGoogleEvent extends AuthEvent {
+  const SignInWithGoogleEvent();
 }
-
-class SignUpWithEmailEvent extends AuthEvent {
-  final String email;
-  final String password;
-
-  SignUpWithEmailEvent(this.email, this.password);
-
-  @override
-  List<Object?> get props => [email, password];
-}
-
-class SignInWithGoogleEvent extends AuthEvent {}
 
 class SendOtpEvent extends AuthEvent {
   final String phoneNumber;
-
-  SendOtpEvent(this.phoneNumber);
+  const SendOtpEvent(this.phoneNumber);
 
   @override
   List<Object?> get props => [phoneNumber];
@@ -40,29 +23,41 @@ class SendOtpEvent extends AuthEvent {
 
 class VerifyPhoneAuthCredentialEvent extends AuthEvent {
   final PhoneAuthCredential credential;
-  VerifyPhoneAuthCredentialEvent(this.credential);
+  const VerifyPhoneAuthCredentialEvent(this.credential);
+
+  @override
+  List<Object?> get props => [credential];
 }
 
 class OtpFailedEvent extends AuthEvent {
   final String error;
-  OtpFailedEvent(this.error);
+  const OtpFailedEvent(this.error);
+
+  @override
+  List<Object?> get props => [error];
 }
 
 class OtpCodeSentEvent extends AuthEvent {
   final String verificationId;
-  OtpCodeSentEvent(this.verificationId);
+  const OtpCodeSentEvent(this.verificationId);
+
+  @override
+  List<Object?> get props => [verificationId];
 }
 
-class OtpTimeoutEvent extends AuthEvent {}
+class OtpTimeoutEvent extends AuthEvent {
+  const OtpTimeoutEvent();
+}
 
 class VerifyOtpEvent extends AuthEvent {
   final String verificationId;
   final String otp;
-
-  VerifyOtpEvent(this.verificationId, this.otp);
+  const VerifyOtpEvent(this.verificationId, this.otp);
 
   @override
   List<Object?> get props => [verificationId, otp];
 }
 
-class SignOutEvent extends AuthEvent {}
+class SignOutEvent extends AuthEvent {
+  const SignOutEvent();
+}

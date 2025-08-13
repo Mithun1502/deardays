@@ -8,7 +8,7 @@ part 'diary_state.dart';
 
 class DiaryBloc extends Bloc<DiaryEvent, DiaryState> {
   final LocalDataSource _dataSource = LocalDataSource();
-  final String userId;
+  late final String userId;
 
   DiaryBloc({required this.userId}) : super(DiaryLoading()) {
     on<LoadEntriesEvent>(_onLoadEntries);

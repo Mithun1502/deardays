@@ -3,42 +3,32 @@ import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthRepository {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
-    scopes: ['email'],
-  );
+  final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email']);
 
   Future<UserCredential> loginWithEmail(String email, String password) async {
-    await _clearSessions();
     return await _firebaseAuth.signInWithEmailAndPassword(
-      email: email,
+      email: email.trim(),
       password: password,
     );
   }
 
   Future<UserCredential> signUpWithEmail(String email, String password) async {
-    await _clearSessions();
     return await _firebaseAuth.createUserWithEmailAndPassword(
-      email: email,
+      email: email.trim(),
       password: password,
     );
   }
 
-  Future<UserCredential?> signInWithGoogle() async {
-    await _clearSessions();
+  Future<UserCredential?> signInWithGoogle(
+      {bool forceAccountPicker = true}) async {
+    if (forceAccountPicker) {
+      try {
+        await _googleSignIn.signOut();
+        await _googleSignIn.disconnect();
+      } catch (_) {}
+    }
 
-    // Force sign-out + disconnect before choosing account
-    try {
-      await _googleSignIn.signOut();
-      await _googleSignIn.disconnect();
-    } catch (_) {}
-
-    // Create fresh instance for forcing account picker
-    final GoogleSignIn freshGoogleSignIn = GoogleSignIn(
-      scopes: ['email'],
-      forceCodeForRefreshToken: true,
-    );
-
-    final GoogleSignInAccount? googleUser = await freshGoogleSignIn.signIn();
+    final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
     if (googleUser == null) return null;
 
     final GoogleSignInAuthentication googleAuth =
@@ -70,7 +60,6 @@ class AuthRepository {
   }
 
   Future<UserCredential> verifyOtp(String verificationId, String otp) async {
-    await _clearSessions();
     final credential = PhoneAuthProvider.credential(
       verificationId: verificationId,
       smsCode: otp,
@@ -79,7 +68,13 @@ class AuthRepository {
   }
 
   Future<void> signOut() async {
-    await _clearSessions();
+    try {
+      await _firebaseAuth.signOut();
+    } catch (_) {}
+    try {
+      await _googleSignIn.signOut();
+      await _googleSignIn.disconnect();
+    } catch (_) {}
   }
 
   String? getLoginProvider() {
@@ -90,21 +85,7 @@ class AuthRepository {
     return null;
   }
 
-  String? getCurrentUserId() {
-    return _firebaseAuth.currentUser?.uid;
-  }
+  String? getCurrentUserId() => _firebaseAuth.currentUser?.uid;
 
-  bool isLoggedIn() {
-    return _firebaseAuth.currentUser != null;
-  }
-
-  Future<void> _clearSessions() async {
-    try {
-      await _firebaseAuth.signOut();
-    } catch (_) {}
-    try {
-      await _googleSignIn.signOut();
-      await _googleSignIn.disconnect();
-    } catch (_) {}
-  }
+  bool isLoggedIn() => _firebaseAuth.currentUser != null;
 }

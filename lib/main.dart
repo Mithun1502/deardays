@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:dear_days/features/diary/presentation/pages/splash_screen.dart';
+import 'package:dear_days/features/auth/presentation/pages/login_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -8,15 +8,13 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:dear_days/app_theme.dart';
 import 'package:dear_days/features/auth/bloc/auth_bloc.dart';
 import 'package:dear_days/features/auth/data/auth_repository.dart';
-import 'package:dear_days/features/auth/presentation/pages/login_page.dart';
-import 'package:dear_days/features/auth/presentation/pages/signup_page.dart';
 import 'package:dear_days/features/auth/presentation/pages/phone_login_page.dart';
 import 'package:dear_days/features/auth/presentation/pages/signout_page.dart';
 import 'package:dear_days/features/diary/bloc/diary_bloc.dart';
 import 'package:dear_days/features/diary/presentation/pages/diary_list_page.dart';
 import 'package:dear_days/features/settings/theme/theme_bloc.dart';
 import 'package:dear_days/core/utils/shared_prefs_helper.dart';
-import 'app_theme.dart';
+import 'package:dear_days/features/diary/presentation/pages/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,8 +23,8 @@ void main() async {
     await Firebase.initializeApp();
     await SharedPrefsHelper.init();
   } catch (e, st) {
-    print("Initialization error: $e");
-    print("Stack trace:\n$st");
+    debugPrint("Initialization error: $e");
+    debugPrint("Stack trace:\n$st");
   }
 
   runApp(const DearDaysApp());
@@ -46,7 +44,6 @@ class DearDaysApp extends StatelessWidget {
               AuthBloc(authRepository: authRepository)..add(AppStarted()),
         ),
         BlocProvider(create: (_) => ThemeBloc()..add(LoadThemeEvent())),
-        BlocProvider(create: (_) => DiaryBloc(userId: '')),
       ],
       child: BlocBuilder<ThemeBloc, ThemeState>(
         builder: (context, themeState) {
@@ -70,45 +67,6 @@ class DearDaysApp extends StatelessWidget {
   }
 }
 
-class _SplashScreenState extends State<SplashScreen> {
-  @override
-  void initState() {
-    super.initState();
-    _checkLoginStatus();
-  }
-
-  void _checkLoginStatus() async {
-    final user = FirebaseAuth.instance.currentUser;
-
-    if (user != null) {
-      Navigator.pushReplacementNamed(context, '/home');
-    } else {
-      await Future.delayed(const Duration(seconds: 2));
-      Navigator.pushReplacementNamed(context, '/root');
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color.fromARGB(255, 3, 60, 86), Color(0xFFE1F5FE)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: const Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Center(
-          child:
-              CircularProgressIndicator(color: Color.fromARGB(255, 2, 7, 16)),
-        ),
-      ),
-    );
-  }
-}
-
 class RootPage extends StatelessWidget {
   const RootPage({super.key});
 
@@ -117,7 +75,11 @@ class RootPage extends StatelessWidget {
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
         if (state is AuthSuccess) {
-          return const DiaryListPage();
+          // Rebuild the UI with a new DiaryBloc for the logged-in user
+          return BlocProvider(
+            create: (_) => DiaryBloc(userId: state.user.uid),
+            child: const DiaryListPage(),
+          );
         } else if (state is AuthFailure) {
           if (state.error == "Logged out") {
             return const SignOutPage();
@@ -127,6 +89,8 @@ class RootPage extends StatelessWidget {
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );
+        } else if (state is AuthUnauthenticated) {
+          return const LoginPage();
         } else {
           return const Scaffold(
             body: Center(child: Text("Checking authentication...")),
