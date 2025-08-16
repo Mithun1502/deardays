@@ -172,7 +172,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 }
 
-// Private event used internally in Bloc
 class _AuthUserChanged extends AuthEvent {
   final User? user;
   const _AuthUserChanged(this.user);

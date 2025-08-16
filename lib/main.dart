@@ -11,6 +11,7 @@ import 'package:dear_days/features/auth/data/auth_repository.dart';
 import 'package:dear_days/features/auth/presentation/pages/phone_login_page.dart';
 import 'package:dear_days/features/auth/presentation/pages/signout_page.dart';
 import 'package:dear_days/features/diary/bloc/diary_bloc.dart';
+import 'package:dear_days/features/diary/data/local_data_source.dart';
 import 'package:dear_days/features/diary/presentation/pages/diary_list_page.dart';
 import 'package:dear_days/features/settings/theme/theme_bloc.dart';
 import 'package:dear_days/core/utils/shared_prefs_helper.dart';
@@ -44,6 +45,7 @@ class DearDaysApp extends StatelessWidget {
               AuthBloc(authRepository: authRepository)..add(AppStarted()),
         ),
         BlocProvider(create: (_) => ThemeBloc()..add(LoadThemeEvent())),
+        BlocProvider(create: (_) => DiaryBloc()..add(LoadEntriesEvent())),
       ],
       child: BlocBuilder<ThemeBloc, ThemeState>(
         builder: (context, themeState) {
@@ -56,9 +58,9 @@ class DearDaysApp extends StatelessWidget {
               '/': (context) => const SplashScreen(),
               '/root': (context) => const RootPage(),
               '/login': (context) => const LoginPage(),
-              '/home': (context) => const DiaryListPage(),
               '/phone-login': (context) => const PhoneLoginPage(),
               '/signout': (context) => const SignOutPage(),
+              '/home': (context) => const DiaryListPage(),
             },
           );
         },
@@ -75,11 +77,7 @@ class RootPage extends StatelessWidget {
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
         if (state is AuthSuccess) {
-          // Rebuild the UI with a new DiaryBloc for the logged-in user
-          return BlocProvider(
-            create: (_) => DiaryBloc(userId: state.user.uid),
-            child: const DiaryListPage(),
-          );
+          return const DiaryListPage();
         } else if (state is AuthFailure) {
           if (state.error == "Logged out") {
             return const SignOutPage();

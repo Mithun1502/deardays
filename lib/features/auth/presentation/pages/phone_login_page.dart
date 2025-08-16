@@ -20,7 +20,6 @@ class _PhoneLoginPageState extends State<PhoneLoginPage> {
     final phoneNumber = _phoneController.text.trim();
     if (phoneNumber.isNotEmpty) {
       context.read<AuthBloc>().add(SendOtpEvent(phoneNumber));
-      // Don't setState here — wait for OtpSent state
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Enter valid phone number")),
@@ -48,7 +47,7 @@ class _PhoneLoginPageState extends State<PhoneLoginPage> {
         title: const Text(
           "Phone Login",
           style: TextStyle(
-              color: Color.fromARGB(255, 6, 8, 10),
+              color: Color.fromARGB(255, 0, 0, 0),
               fontWeight: FontWeight.bold,
               fontSize: 30),
         ),
@@ -101,7 +100,7 @@ class _PhoneLoginPageState extends State<PhoneLoginPage> {
                         decoration: const InputDecoration(
                           labelText: 'Phone Number (e.g. +919876543210)',
                           labelStyle: TextStyle(
-                              color: Color.fromARGB(255, 1, 11, 20),
+                              color: Color.fromARGB(255, 5, 68, 124),
                               fontWeight: FontWeight.bold,
                               fontSize: 17),
                           border: OutlineInputBorder(),
@@ -124,7 +123,7 @@ class _PhoneLoginPageState extends State<PhoneLoginPage> {
                                   fontSize: 17),
                               border: OutlineInputBorder(),
                               filled: true,
-                              fillColor: Colors.white,
+                              fillColor: Color.fromARGB(255, 255, 255, 255),
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -141,9 +140,9 @@ class _PhoneLoginPageState extends State<PhoneLoginPage> {
                         child: const Text(
                           'Send OTP',
                           style: TextStyle(
-                              color: Color.fromARGB(255, 19, 52, 84),
+                              color: Color.fromARGB(255, 103, 158, 203),
                               fontWeight: FontWeight.bold,
-                              fontSize: 17),
+                              fontSize: 20),
                         ),
                       ),
                     const SizedBox(height: 24),

@@ -7,10 +7,9 @@ part 'diary_event.dart';
 part 'diary_state.dart';
 
 class DiaryBloc extends Bloc<DiaryEvent, DiaryState> {
-  final LocalDataSource _dataSource = LocalDataSource();
-  late final String userId;
+  final DiaryRepository _repository = DiaryRepository();
 
-  DiaryBloc({required this.userId}) : super(DiaryLoading()) {
+  DiaryBloc() : super(DiaryLoading()) {
     on<LoadEntriesEvent>(_onLoadEntries);
     on<AddEntryEvent>(_onAddEntry);
     on<UpdateEntryEvent>(_onUpdateEntry);
@@ -21,45 +20,53 @@ class DiaryBloc extends Bloc<DiaryEvent, DiaryState> {
   Future<void> _onLoadEntries(
       LoadEntriesEvent event, Emitter<DiaryState> emit) async {
     emit(DiaryLoading());
-    final entries = await _dataSource.getAllEntries(userId: userId);
-    emit(DiaryLoaded(entries));
+    try {
+      final entries = await _repository.getAllEntries();
+      emit(DiaryLoaded(entries));
+    } catch (e) {
+      emit(DiaryError("Failed to load entries: $e"));
+    }
   }
 
   Future<void> _onAddEntry(
       AddEntryEvent event, Emitter<DiaryState> emit) async {
-    await _dataSource.insertEntry(event.entry);
-    add(LoadEntriesEvent());
+    try {
+      await _repository.insertEntry(event.entry);
+      add(LoadEntriesEvent());
+    } catch (e) {
+      emit(DiaryError("Failed to add entry: $e"));
+    }
   }
 
   Future<void> _onUpdateEntry(
       UpdateEntryEvent event, Emitter<DiaryState> emit) async {
-    await _dataSource.updateEntry(event.entry);
-    add(LoadEntriesEvent());
+    try {
+      await _repository.updateEntry(event.entry);
+      add(LoadEntriesEvent());
+    } catch (e) {
+      emit(DiaryError("Failed to update entry: $e"));
+    }
   }
 
   Future<void> _onDeleteEntry(
       DeleteEntryEvent event, Emitter<DiaryState> emit) async {
-    await _dataSource.deleteEntry(event.id);
-    add(LoadEntriesEvent());
+    try {
+      await _repository.deleteEntry(event.id);
+      add(LoadEntriesEvent());
+    } catch (e) {
+      emit(DiaryError("Failed to delete entry: $e"));
+    }
   }
 
   Future<void> _onFilterEntries(
       FilterEntriesEvent event, Emitter<DiaryState> emit) async {
     emit(DiaryLoading());
-    final allEntries = await _dataSource.getAllEntries(userId: userId);
-
-    List<DiaryModel> filtered = allEntries;
-
-    if (event.mood != null && event.mood!.isNotEmpty) {
-      filtered = filtered.where((e) => e.mood == event.mood).toList();
+    try {
+      final filteredEntries = await _repository.getFilteredEntries(
+          mood: event.mood, date: event.selectedDate);
+      emit(DiaryLoaded(filteredEntries));
+    } catch (e) {
+      emit(DiaryError("Failed to filter entries: $e"));
     }
-
-    if (event.selectedDate != null && event.selectedDate!.isNotEmpty) {
-      filtered = filtered
-          .where((e) => e.dateTime.startsWith(event.selectedDate!))
-          .toList();
-    }
-
-    emit(DiaryLoaded(filtered));
   }
 }

@@ -1,118 +1,69 @@
-import 'package:sqflite/sqflite.dart';
-import 'package:path/path.dart';
-import 'package:dear_days/features/diary/data/diary_model.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'diary_model.dart';
 
-class LocalDataSource {
-  static final LocalDataSource _instance = LocalDataSource._internal();
-  factory LocalDataSource() => _instance;
-  LocalDataSource._internal();
+class DiaryRepository {
+  static final DiaryRepository _instance = DiaryRepository._internal();
+  factory DiaryRepository() => _instance;
+  DiaryRepository._internal();
 
-  static Database? _database;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  Future<Database> get database async {
-    if (_database != null) return _database!;
-    _database = await _initDB();
-    return _database!;
+  String get _uid => FirebaseAuth.instance.currentUser!.uid;
+
+  CollectionReference get _diaryCollection =>
+      _firestore.collection('users').doc(_uid).collection('diaries');
+
+  Future<void> insertEntry(DiaryModel entry) async {
+    final docRef = _diaryCollection.doc();
+    await docRef.set({
+      'id': docRef.id,
+      'userId': _uid,
+      'title': entry.title,
+      'content': entry.content,
+      'dateTime': entry.dateTime,
+      'mood': entry.mood,
+      'mediaPaths': entry.mediaPaths, // ✅ store as array
+    });
   }
 
-  Future<Database> _initDB() async {
-    final dbPath = await getDatabasesPath();
-    final path = join(dbPath, 'dear_days.db');
-
-    return await openDatabase(
-      path,
-      version: 3,
-      onCreate: (db, version) async {
-        await db.execute('''
-          CREATE TABLE diary_entries (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            userId TEXT NOT NULL,
-            title TEXT NOT NULL,
-            content TEXT NOT NULL,
-            dateTime TEXT NOT NULL,
-            mood TEXT,
-            mediaPaths TEXT
-          )
-        ''');
-      },
-      onUpgrade: (db, oldVersion, newVersion) async {
-        if (oldVersion < 2) {
-          await db
-              .execute('ALTER TABLE diary_entries ADD COLUMN mediaPaths TEXT');
-        }
-        if (oldVersion < 3) {
-          await db.execute(
-              'ALTER TABLE diary_entries ADD COLUMN userId TEXT NOT NULL DEFAULT ""');
-        }
-      },
-    );
+  Future<List<DiaryModel>> getAllEntries() async {
+    final snapshot =
+        await _diaryCollection.orderBy('dateTime', descending: true).get();
+    return snapshot.docs
+        .map((doc) => DiaryModel.fromMap(doc.data() as Map<String, dynamic>))
+        .toList();
   }
 
-  Future<int> insertEntry(DiaryModel entry) async {
-    final db = await database;
-    return await db.insert(
-      'diary_entries',
-      entry.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+  Future<void> updateEntry(DiaryModel entry) async {
+    if (entry.id == null) return;
+    await _diaryCollection.doc(entry.id).update({
+      'title': entry.title,
+      'content': entry.content,
+      'dateTime': entry.dateTime,
+      'mood': entry.mood,
+      'mediaPaths': entry.mediaPaths, // ✅ store as array
+    });
   }
 
-  Future<List<DiaryModel>> getAllEntries({required String userId}) async {
-    final db = await database;
-    final result = await db.query(
-      'diary_entries',
-      where: 'userId = ?',
-      whereArgs: [userId],
-      orderBy: 'dateTime DESC',
-    );
-    return result.map((map) => DiaryModel.fromMap(map)).toList();
+  Future<void> deleteEntry(String id) async {
+    await _diaryCollection.doc(id).delete();
   }
 
-  Future<List<DiaryModel>> getFilteredEntries({
-    required String userId,
-    String? dateTime,
-    String? mood,
-  }) async {
-    final db = await database;
-    final whereClauses = <String>['userId = ?'];
-    final whereArgs = <dynamic>[userId];
-
-    if (dateTime != null && dateTime.isNotEmpty) {
-      whereClauses.add("dateTime LIKE ?");
-      whereArgs.add('%$dateTime%');
-    }
-
+  Future<List<DiaryModel>> getFilteredEntries(
+      {String? mood, String? date}) async {
+    Query query = _diaryCollection;
     if (mood != null && mood.isNotEmpty) {
-      whereClauses.add("mood = ?");
-      whereArgs.add(mood);
+      query = query.where('mood', isEqualTo: mood);
     }
-
-    final result = await db.query(
-      'diary_entries',
-      where: whereClauses.join(' AND '),
-      whereArgs: whereArgs,
-      orderBy: 'dateTime DESC',
-    );
-
-    return result.map((map) => DiaryModel.fromMap(map)).toList();
-  }
-
-  Future<int> updateEntry(DiaryModel entry) async {
-    final db = await database;
-    return await db.update(
-      'diary_entries',
-      entry.toMap(),
-      where: 'id = ?',
-      whereArgs: [entry.id],
-    );
-  }
-
-  Future<int> deleteEntry(int id) async {
-    final db = await database;
-    return await db.delete(
-      'diary_entries',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    if (date != null && date.isNotEmpty) {
+      query = query
+          .where('dateTime', isGreaterThanOrEqualTo: date)
+          .where('dateTime', isLessThanOrEqualTo: '$date\uf8ff');
+    }
+    final snapshot = await query.orderBy('dateTime', descending: true).get();
+    return snapshot.docs
+        .map((doc) => DiaryModel.fromMap(doc.data() as Map<String, dynamic>))
+        .toList();
   }
 }

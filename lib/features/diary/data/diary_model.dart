@@ -1,5 +1,5 @@
 class DiaryModel {
-  final int? id;
+  final String? id;
   final String userId;
   final String title;
   final String content;
@@ -25,21 +25,23 @@ class DiaryModel {
       'content': content,
       'dateTime': dateTime,
       'mood': mood,
-      'mediaPaths': mediaPaths.join(','),
+      'mediaPaths': mediaPaths,
     };
   }
 
   factory DiaryModel.fromMap(Map<String, dynamic> map) {
     return DiaryModel(
-      id: map['id'],
-      userId: map['userId'],
-      title: map['title'],
-      content: map['content'],
-      dateTime: map['dateTime'],
+      id: map['id']?.toString(),
+      userId: map['userId'] ?? '',
+      title: map['title'] ?? '',
+      content: map['content'] ?? '',
+      dateTime: map['dateTime'] ?? '',
       mood: map['mood'],
-      mediaPaths: map['mediaPaths'] != null && map['mediaPaths'] != ''
-          ? (map['mediaPaths'] as String).split(',')
-          : [],
+      mediaPaths: map['mediaPaths'] is List
+          ? List<String>.from(map['mediaPaths'])
+          : map['mediaPaths'] != null && map['mediaPaths'] != ''
+              ? map['mediaPaths'].toString().split(',')
+              : [],
     );
   }
 }

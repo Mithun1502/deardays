@@ -11,6 +11,7 @@ class MediaPreview extends StatefulWidget {
     super.key,
     required this.mediaPaths,
     required this.onMediaChanged,
+    required bool isReadOnly,
   });
 
   @override

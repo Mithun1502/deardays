@@ -27,7 +27,7 @@ class UpdateEntryEvent extends DiaryEvent {
 }
 
 class DeleteEntryEvent extends DiaryEvent {
-  final int id;
+  final String id;
   const DeleteEntryEvent(this.id);
 
   @override

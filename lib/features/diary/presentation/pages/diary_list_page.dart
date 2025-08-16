@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:dear_days/features/diary/bloc/diary_bloc.dart';
 import 'package:dear_days/features/diary/data/local_data_source.dart';
 import 'package:dear_days/features/diary/data/diary_model.dart';
 import 'package:dear_days/features/diary/presentation/pages/add_edit_page.dart';
@@ -19,7 +20,7 @@ class DiaryListPage extends StatefulWidget {
 }
 
 class _DiaryListPageState extends State<DiaryListPage> {
-  final LocalDataSource _dataSource = LocalDataSource();
+  final DiaryRepository _dataSource = DiaryRepository();
 
   List<DiaryModel> _entries = [];
   List<DiaryModel> _filteredEntries = [];
@@ -35,7 +36,7 @@ class _DiaryListPageState extends State<DiaryListPage> {
   }
 
   Future<void> _loadEntries() async {
-    final entries = await _dataSource.getAllEntries(userId: '');
+    final entries = await _dataSource.getAllEntries();
     setState(() {
       _entries = entries;
       _applyFilters();
@@ -111,7 +112,7 @@ class _DiaryListPageState extends State<DiaryListPage> {
   }
 
   void _deleteEntry(int id) async {
-    await _dataSource.deleteEntry(id);
+    await _dataSource.deleteEntry(id.toString());
     setState(() {
       _entries.removeWhere((e) => e.id == id);
       _filteredEntries.removeWhere((e) => e.id == id);
@@ -140,9 +141,10 @@ class _DiaryListPageState extends State<DiaryListPage> {
           title: Text(
             'Dear Days',
             style: TextStyle(
-              color: textColor,
+              color:
+                  isDark ? Colors.white : const Color.fromARGB(255, 3, 14, 29),
               fontWeight: FontWeight.bold,
-              fontSize: 26,
+              fontSize: 30,
             ),
           ),
           iconTheme: IconThemeData(color: textColor),
@@ -182,16 +184,16 @@ class _DiaryListPageState extends State<DiaryListPage> {
                   Icons.logout,
                   color: isDark
                       ? Colors.white
-                      : const Color.fromARGB(221, 190, 191, 195),
+                      : const Color.fromARGB(221, 0, 0, 0),
                 ),
                 title: Text(
                   'Sign Out',
                   style: TextStyle(
                     color: isDark
                         ? Colors.white
-                        : const Color.fromARGB(221, 190, 191, 195),
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
+                        : const Color.fromARGB(221, 0, 0, 0),
+                    fontSize: 21,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
                 onTap: () {
@@ -271,14 +273,19 @@ class _DiaryListPageState extends State<DiaryListPage> {
                   const SizedBox(width: 10),
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          isDark ? Colors.white10 : Colors.blueAccent,
+                      backgroundColor: isDark
+                          ? Colors.white10
+                          : const Color.fromARGB(255, 188, 201, 220),
                     ),
                     onPressed: _showDatePicker,
                     icon: const Icon(Icons.calendar_today),
-                    label: Text(_selectedDate == null
-                        ? 'Pick Date'
-                        : DateFormat('yyyy-MM-dd').format(_selectedDate!)),
+                    label: Text(
+                      _selectedDate == null
+                          ? 'Pick Date'
+                          : DateFormat('yyyy-MM-dd').format(_selectedDate!),
+                      style: TextStyle(
+                          color: isDark ? Colors.white : Colors.black),
+                    ),
                   ),
                   IconButton(
                     onPressed: _clearFilters,
@@ -291,9 +298,37 @@ class _DiaryListPageState extends State<DiaryListPage> {
               Expanded(
                 child: _filteredEntries.isEmpty
                     ? Center(
-                        child: Text(
-                          'Start your Journey here..!',
-                          style: TextStyle(color: textColor),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.book_outlined,
+                                size: 80, color: textColor.withOpacity(0.5)),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Start your Journey here..!',
+                              style: TextStyle(color: textColor, fontSize: 18),
+                            ),
+                            const SizedBox(height: 12),
+                            ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: isDark
+                                    ? Colors.white
+                                    : Theme.of(context).primaryColor,
+                                foregroundColor:
+                                    isDark ? Colors.black : Colors.white,
+                              ),
+                              icon: const Icon(Icons.add),
+                              label: const Text('Add New Story'),
+                              onPressed: () async {
+                                final result = await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (_) => const AddEditPage()),
+                                );
+                                if (result == true) _loadEntries();
+                              },
+                            ),
+                          ],
                         ),
                       )
                     : AnimationLimiter(
@@ -302,7 +337,8 @@ class _DiaryListPageState extends State<DiaryListPage> {
                           itemBuilder: (context, index) {
                             final entry = _filteredEntries[index];
                             return Dismissible(
-                              key: Key(entry.id.toString()),
+                              key:
+                                  Key(entry.id?.toString() ?? index.toString()),
                               direction: DismissDirection.endToStart,
                               background: Container(
                                 color: Colors.red,
@@ -321,19 +357,29 @@ class _DiaryListPageState extends State<DiaryListPage> {
                                         'Are you sure you want to delete this diary entry?'),
                                     actions: [
                                       TextButton(
-                                          onPressed: () =>
-                                              Navigator.of(context).pop(false),
-                                          child: const Text('Cancel')),
+                                        onPressed: () =>
+                                            Navigator.of(context).pop(false),
+                                        child: const Text('Cancel'),
+                                      ),
                                       TextButton(
-                                          onPressed: () =>
-                                              Navigator.of(context).pop(true),
-                                          child: const Text('Delete')),
+                                        onPressed: () =>
+                                            Navigator.of(context).pop(true),
+                                        child: const Text('Delete'),
+                                      ),
                                     ],
                                   ),
                                 );
                               },
-                              onDismissed: (direction) =>
-                                  _deleteEntry(entry.id!),
+                              onDismissed: (direction) {
+                                if (entry.id != null) {
+                                  context
+                                      .read<DiaryBloc>()
+                                      .add(DeleteEntryEvent(entry.id!));
+                                } else {
+                                  debugPrint(
+                                      "⚠️ Tried to delete entry with null ID");
+                                }
+                              },
                               child: AnimationConfiguration.staggeredList(
                                 position: index,
                                 duration: const Duration(milliseconds: 400),
@@ -373,9 +419,7 @@ class _DiaryListPageState extends State<DiaryListPage> {
                                                         gradient: gradient,
                                                         borderRadius:
                                                             BorderRadius
-                                                                .circular(
-                                                          16,
-                                                        ),
+                                                                .circular(16),
                                                         boxShadow: [
                                                           BoxShadow(
                                                             color: Colors.black
@@ -595,7 +639,7 @@ class _DiaryListPageState extends State<DiaryListPage> {
                           },
                         ),
                       ),
-              ),
+              )
             ],
           ),
         ),

@@ -1,15 +1,14 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import 'package:dear_days/app_theme.dart';
 import 'package:dear_days/config/constants.dart';
 import 'package:dear_days/features/diary/data/diary_model.dart';
-import 'package:dear_days/features/diary/data/local_data_source.dart';
-import 'package:dear_days/features/settings/theme/theme_bloc.dart';
 import 'package:dear_days/features/diary/presentation/widgets/media_preview.dart';
+import 'package:dear_days/features/diary/bloc/diary_bloc.dart';
+import 'package:dear_days/features/settings/theme/theme_bloc.dart';
 
 class AddEditPage extends StatefulWidget {
   final DiaryModel? entry;
@@ -42,6 +41,8 @@ class _AddEditPageState extends State<AddEditPage> {
 
   Future<void> _saveEntry() async {
     if (_formKey.currentState!.validate()) {
+      final userId = FirebaseAuth.instance.currentUser?.uid ?? '';
+
       final newEntry = DiaryModel(
         id: widget.entry?.id,
         title: _titleController.text.trim(),
@@ -49,13 +50,15 @@ class _AddEditPageState extends State<AddEditPage> {
         dateTime: DateTime.now().toIso8601String(),
         mood: _mood,
         mediaPaths: _mediaPaths,
-        userId: '',
+        userId: userId,
       );
 
+      final diaryBloc = context.read<DiaryBloc>();
+
       if (widget.entry == null) {
-        await LocalDataSource().insertEntry(newEntry);
+        diaryBloc.add(AddEntryEvent(newEntry));
       } else {
-        await LocalDataSource().updateEntry(newEntry);
+        diaryBloc.add(UpdateEntryEvent(newEntry));
       }
 
       Navigator.pop(context, true);
@@ -64,26 +67,27 @@ class _AddEditPageState extends State<AddEditPage> {
 
   Future<void> _pickMedia() async {
     final picked = await _picker.pickMultiImage();
-    if (picked != null && picked.isNotEmpty) {
+    if (picked.isNotEmpty) {
       setState(() {
         _mediaPaths.addAll(picked.map((e) => e.path));
       });
     }
   }
 
-  void _removeMedia(int index) {
-    setState(() {
-      _mediaPaths.removeAt(index);
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    return BlocListener<ThemeBloc, ThemeState>(
-      listener: (context, state) => setState(() {}),
+    return BlocListener<DiaryBloc, DiaryState>(
+      listener: (context, state) {
+        if (state is DiaryLoaded) {
+          Navigator.pop(context, true);
+        } else if (state is DiaryError) {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(state.message)));
+        }
+      },
       child: BlocBuilder<ThemeBloc, ThemeState>(
-        builder: (context, state) {
-          final isDark = state.isDarkMode;
+        builder: (context, themeState) {
+          final isDark = themeState.isDarkMode;
           final gradient = isDark ? darkGradient : lightGradient;
 
           return Container(
@@ -128,7 +132,7 @@ class _AddEditPageState extends State<AddEditPage> {
                     children: [
                       _buildTextField(
                         controller: _titleController,
-                        label: 'Title',
+                        label: 'So what is the topic today..',
                         validatorMsg: 'Enter a title',
                         isDark: isDark,
                       ),
@@ -183,7 +187,7 @@ class _AddEditPageState extends State<AddEditPage> {
         controller: _contentController,
         style: TextStyle(color: isDark ? Colors.white : Colors.black),
         decoration: InputDecoration(
-          labelText: 'Content',
+          labelText: 'Write something...',
           labelStyle: TextStyle(color: isDark ? Colors.white70 : Colors.black),
           alignLabelWithHint: true,
           filled: true,
@@ -243,6 +247,7 @@ class _AddEditPageState extends State<AddEditPage> {
           onMediaChanged: (newList) {
             setState(() => _mediaPaths = newList);
           },
+          isReadOnly: true,
         ),
         const SizedBox(height: 8),
         Row(
